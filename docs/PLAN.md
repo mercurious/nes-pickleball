@@ -1,5 +1,8 @@
 # The build plan (2026-10-10, revised the same evening)
 
+**Status 2026-10-11:** Release 1 (v0.0.1, the cartridge) is built; the phases' gates and what each one taught are in
+`Findings_20261011.md`. Release 2 (the teammate add-on) has not started.
+
 Two releases. **v0.0.1 is the cartridge**: a ROM that plays on every NES emulator, on a flash cart and on the
 Flip 2 as a plain NES game, built in one autonomous session. **v0.0.2 is the teammate add-on**: on ROCKNIX with
 llamatalk, your doubles partner talks, calls the score, and you talk back while you play, the way autogamer's
