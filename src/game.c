@@ -176,7 +176,7 @@ static void apply_point(void)
         ++score[w];
         event(EV_POINT_WON, w);
         o = w ^ 1;
-        if (score[w] >= game_to && score[w] - score[o] >= 2) {
+        if (score[w] >= game_to && (int)score[w] - (int)score[o] >= 2) {
             ++games[w];
             hud_call("GAME");
             jingle(JG_GAME); applause(120);

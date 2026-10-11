@@ -18,10 +18,13 @@ unsigned char ai_mid[4];               /* 1: takes the middle, 2: leaves it (dir
 unsigned char team_level[2];
 static unsigned char tier_of(unsigned char s) { unsigned char l = team_level[TEAM(s)]; return l ? l : 1; }
 
+/* cc65 trap: (int)(a >> 8) - (int)(b >> 8) is compiled as an 8-bit subtraction zero-extended to 16 bits, so a
+   negative difference comes out as 0..255. The subtractions below go through a 16-bit variable on purpose. */
 static unsigned char crossing_x(unsigned char s)
 {
     int dy, dv, frames, txp;
-    dy = (int)(py[s] >> 8) - (int)(by >> 8);
+    dy = py[s] >> 8;
+    dy -= (int)(by >> 8);
     dv = vy >> 4;
     if (dv == 0) return bx >> 8;
     frames = (dy * 16) / dv;
@@ -37,7 +40,8 @@ static unsigned char crossing_x(unsigned char s)
 static int height_at_row(unsigned char y)
 {
     int dy, dv, t;
-    dy = (int)y - (int)(by >> 8);
+    dy = y;
+    dy -= (int)(by >> 8);
     dv = vy >> 4;
     if (dv == 0) return -1;
     t = (dy * 16) / dv;
