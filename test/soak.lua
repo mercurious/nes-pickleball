@@ -8,12 +8,16 @@ T.run(function()
   local mb = T.sym("mb_magic")
   local function mbx(i) return T.rd(mb + i) end
   local won, points, rallies, faults, cpu_kitchen, cpu_2b, longest = {[0]=0,[1]=0}, 0, 0, 0, 0, 0, 0
+  local first = true
   local function start()
-    T.step(30); T.tap("left", 3); T.tap("start", 3); T.step(10)
+    T.step(30)
+    if first then T.tap("left", 3); first = false end   -- the menu keeps EXHIBITION selected after a game
+    T.tap("start", 3); T.step(10)
     T.wr(T.sym("team_level"), LA); T.wr(T.sym("team_level") + 1, LB)
+    return T.check(mbx(0) == 0x5B and (mbx(6) & 7) == 4, "exhibition running")
   end
-  T.step(60); start()
-  T.check(mbx(0) == 0x5B and (mbx(6) & 7) == 4, "exhibition running")
+  T.step(60)
+  if not start() then T.done("soak"); return end
   local last_n, idle, games = mbx(7), 0, 0
   local rally = 0
   while games < G do
@@ -36,7 +40,7 @@ T.run(function()
       if ev == 28 then
         won[arg] = won[arg] + 1; games = games + 1
         print(string.format("game %d: %d-%d to team %d (frames %d)", games, mbx(3), mbx(4), arg, T.frames))
-        T.step(300); start(); last_n = mbx(7)
+        T.step(300); if not start() then break end; last_n = mbx(7)
       end
     end
   end

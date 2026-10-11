@@ -84,7 +84,8 @@ T.run(function()
         -- the ROM returns to the title after a game in one-game mode; start the next exhibition
         T.step(290)
         T.wr(mb + 10, 0xA5)
-        T.tap("left", 3); T.tap("start", 3); T.step(10)
+        T.tap("start", 3); T.step(10)      -- the menu still shows EXHIBITION: START alone
+        if not T.check((mbx(6) & 7) == 4 and mbx(0) == 0x5B, "the next game is an exhibition") then break end
         m.score[0] = 0; m.score[1] = 0; m.serving = 0; m.num = 2; m.slot = 0
         last_n = mbx(7)
       end
