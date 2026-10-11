@@ -130,6 +130,10 @@ static void move_player(unsigned char s)
 {
     int sp = pspeed[s];
     unsigned char x, y;
+    /* the court is drawn in perspective: a player covers the same court in more pixels the nearer they stand,
+       so the speed scales with the court's width at their depth (1.0 at the far kitchen line, 1.3 at the near
+       baseline, 0.84 at the far baseline) */
+    sp += (sp * ((int)(py[s] >> 8) - FAR_KIT)) >> 8;
     if (sw_t[s]) sp >>= 1;
     if (in_dx[s] > 0) px[s] += sp; else if (in_dx[s] < 0) px[s] -= sp;
     if (in_dy[s] > 0) py[s] += sp; else if (in_dy[s] < 0) py[s] -= sp;
