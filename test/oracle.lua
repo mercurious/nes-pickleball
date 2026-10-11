@@ -7,18 +7,20 @@ local SIDE_X = { [0] = {84, 172}, [1] = {156, 100} }   -- team -> {left, right} 
 
 T.run(function()
   local m = { score = {[0]=0, [1]=0}, serving = 0, num = 2, slot = 0, start = {[0]=0, [1]=2}, games = {[0]=0,[1]=0} }
+  local seed = 20261011
   local function partner(s) return s ~ 1 end
   local function right_slot(team) local s = m.start[team]; if m.score[team] % 2 == 1 then return partner(s) end; return s end
   local function team(s) return s >> 1 end
   local mb = T.sym("mb_magic")
   local function mbx(i) return T.rd(mb + i) end
   T.step(60)
+  T.wr(mb + 10, 0xA5)                     -- announce as a sidecar before the match: the calls are answered below
   T.tap("left", 3)                        -- the menu wraps from 1 PLAYER SINGLES to EXHIBITION
   T.tap("start", 3)
   T.step(10)
   T.check(mbx(0) == 0x5B, "mailbox magic")
   T.check((mbx(6) & 7) == 4, "exhibition mode selected")
-  T.wr(mb + 10, 0xA5)                     -- announce as a sidecar: the calls are answered at once below
+  T.check(mbx(10) == 1, "the first serve gate asks for the call (the announcement survived match_init)")
   local last_n = mbx(7)
   local points, games_done, errors = 0, 0, 0
   local frames_cap = 2000000
@@ -52,7 +54,8 @@ T.run(function()
         T.check(mbx(10) == 1, "the serve gate asks for the call")
         T.wr(mb + 10, 2)
         T.step(40)
-        local loser = (T.frames * 7 + points * 13) % 2
+        seed = (seed * 1103515245 + 12345) % 2147483648
+        local loser = (seed >> 16) & 1
         T.wr(mb + 15, loser + 1)
         points = points + 1
       elseif ev == EV.PASSED or (ev >= 15 and ev <= 25 and ev ~= 17) then
@@ -77,8 +80,8 @@ T.run(function()
         m.games[w] = m.games[w] + 1
         -- the ROM returns to the title after a game in one-game mode; start the next exhibition
         T.step(290)
-        T.tap("left", 3); T.tap("start", 3); T.step(10)
         T.wr(mb + 10, 0xA5)
+        T.tap("left", 3); T.tap("start", 3); T.step(10)
         m.score[0] = 0; m.score[1] = 0; m.serving = 0; m.num = 2; m.slot = 0
         last_n = mbx(7)
       end

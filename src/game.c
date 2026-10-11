@@ -75,7 +75,8 @@ void match_init(unsigned char m, unsigned char lv)
     server_slot = start_server[0];
     ball_live = 0; shots = 0; bounce_side = 0; last_hitter = 0xFF;
     state = ST_PRESERVE; state_t = 0;
-    mb_magic = 0x5B; mb_version = 1; mb_call = 0; mb_directive = 0; mb_bubble = 0;
+    mb_magic = 0x5B; mb_version = 1; mb_directive = 0; mb_bubble = 0;
+    if (mb_call != 0xA5) mb_call = 0;          /* a sidecar's announcement survives a new match */
     hud_dirty = 1;
 }
 
