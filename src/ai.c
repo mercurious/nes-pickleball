@@ -91,14 +91,17 @@ static unsigned char pick_shot(unsigned char s, unsigned char d)
 static unsigned char adist(unsigned char a, unsigned char b) { return a > b ? a - b : b - a; }
 
 /* where to put the shot: the gap between the opponents (their middle or either sideline, whichever is farthest
-   from both), from level 3 up; a scatter around the centre below that */
-static void aim(unsigned char s)
+   from both), from level 3 up; a scatter around the centre below that. The sidelines are taken at the row
+   where this shot lands: deep for a drive or a lob, in the kitchen for a soft shot (the far court narrows
+   toward its baseline, the near court widens) */
+static void aim(unsigned char s, unsigned char deep)
 {
     unsigned char team = TEAM(s), t = tier_of(s), o1 = (team ^ 1) << 1, o2, ly, lx, rx, mx, x1, x2, dl, dr, dm, pick;
     o2 = o1 + 1;
     x1 = px[o1] >> 8; x2 = pactive[o2] ? (px[o2] >> 8) : x1;
     if (t <= 2) { ai_aim_x[s] = CENTER_X - 20 + (rand8() % 41); return; }
-    ly = (team == 0) ? FAR_KIT + 8 : NEAR_KIT - 8;          /* the court's width where the shot lands */
+    if (deep) ly = (team == 0) ? FAR_Y + 12 : NEAR_Y - 12;
+    else ly = (team == 0) ? FAR_KIT + 8 : NEAR_KIT - 8;
     lx = side_l[ly - FAR_Y] + 12; rx = side_r[ly - FAR_Y] - 12;
     mx = (unsigned char)(((unsigned int)x1 + x2) >> 1);
     dl = adist(lx, x1); if (adist(lx, x2) < dl) dl = adist(lx, x2);
@@ -137,7 +140,7 @@ void __fastcall__ ai_intent(unsigned char s)
     coming = ball_live && last_hitter != 0xFF && TEAM(last_hitter) != team;
     if (shots != seen_hit[s]) {                     /* somebody hit: a new decision */
         seen_hit[s] = shots;
-        if (coming) { if ((s & 1) == 0 || !pactive[s & 2]) team_decide(team); ai_t[s] = LV_REACT[t]; aim(s); }
+        if (coming) { if ((s & 1) == 0 || !pactive[s & 2]) team_decide(team); ai_t[s] = LV_REACT[t]; }
     }
     line_y = IS_NEAR(s) ? NEAR_KIT + 3 : FAR_KIT - 3;
     base_y = IS_NEAR(s) ? NEAR_Y + 2 : FAR_Y - 2;
@@ -157,8 +160,10 @@ void __fastcall__ ai_intent(unsigned char s)
             /* letting a long ball go: step back out of its way */
             typ = base_y;
         } else if (in_reach(s)) {
-            if (!((shots == 1 || shots == 2) && bounce_side == 0) && !(bounce_side == 0 && in_kitchen(s)))
+            if (!((shots == 1 || shots == 2) && bounce_side == 0) && !(bounce_side == 0 && in_kitchen(s))) {
                 in_swing[s] = pick_shot(s, IS_NEAR(s) ? ((py[s] >> 8) - NET_Y) : (NET_Y - (py[s] >> 8))) + 1;
+                aim(s, in_swing[s] != SHOT_SOFT + 1);
+            }
         }
     } else {
         /* not hitting: the serving team waits at the baseline for the return to bounce, then everyone
