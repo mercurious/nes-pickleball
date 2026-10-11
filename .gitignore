@@ -1,0 +1,22 @@
+# Build outputs
+build/
+*.nes
+*.o
+*.map
+*.dbg
+*.lbl
+*.mlb
+
+# Tool caches and local state
+__pycache__/
+*.pyc
+state/
+runs/
+evidence/*.wav
+
+# Vendored toolchain checkouts (fetched by the build at a pinned commit)
+vendor/*/
+!vendor/README.md
+
+# Test runner output
+test/out/
