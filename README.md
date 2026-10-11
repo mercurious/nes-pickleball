@@ -15,17 +15,15 @@ two-bounce rule, the 7-foot non-volley zone, underhand serves, one serve, let se
 | [docs/RESEARCH_pickleball.md](docs/RESEARCH_pickleball.md) | the sport: the 2026 rulebook digested, the 1984 differences, strategy, what players say |
 | [docs/RESEARCH_nes.md](docs/RESEARCH_nes.md) | the toolchain: cc65 + neslib, MesenCE's test runner, RetroArch's network commands, the hosts, NES Tennis's facts |
 
-## Two layers
+## Two releases
 
-1. **The ROM.** NROM-256 (32 KB PRG + 8 KB CHR), C and 6502 assembly with cc65, plays on any NES or emulator.
-   Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition
-   (computer against computer) to watch. The server calls the score before every serve; the umpire calls faults.
-2. **The voice layer.** On a Retroid Pocket Flip 2 with [llamatalk](https://github.com/mercurious/llamatalk),
-   a sidecar reads the game's RAM through RetroArch and gives the players voices (Pocket TTS): the score call,
-   court chatter ("mine", "bounce it", "switch", "nice"), and in doubles you talk to your partner (hold R1,
-   Qwen3-ASR): "I've got the middle", "stay back", "switch". A language model fills in between points. The ROM
-   exposes a documented mailbox in RAM for this; without the sidecar it plays exactly the same, and it can be the
-   first game [autogamer](https://github.com/mercurious/autogamer) ships instead of asking for your own dump.
+| version | what | runs on |
+|---|---|---|
+| **v0.0.1 the cartridge** | the ROM: NROM-256 (32 KB PRG + 8 KB CHR), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
+| **v0.0.2 the teammate add-on** | the sidecar: autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "switch"), makes its own calls between points (a language model), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch". No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as an [autogamer](https://github.com/mercurious/autogamer) entry, the first one that needs no dump from the player |
+
+The add-on is built only after the cartridge is validated; the cartridge is built so that the add-on needs
+nothing from it but the frozen mailbox and RAM map.
 
 > **AI disclosure.** This project is written with Claude Code (Anthropic's Claude Fable 5.1). Most of the code
 > and these documents are model output, produced under the author's direction. The author chooses what to build,
@@ -39,7 +37,7 @@ src/        the game: C (game logic) and ca65 assembly (NMI, PPU, sound, DPCM, c
 art/        tiles as text (0-3 per pixel), metasprites, palettes; tools/ turn them into CHR
 tools/      Python 3: chr.py, court.py (the perspective court to a nametable), dmc.py (WAV to DPCM), check_rom.py
 test/       Lua tests for MesenCE's test runner, with a rules oracle
-sidecar/    the voice layer (Python 3, stdlib): RetroArch network commands, Pocket TTS, Qwen3-ASR, the model
+sidecar/    v0.0.1: stub.py (a desktop fake voice over RetroArch); v0.0.2: the teammate (Pocket TTS, Qwen3-ASR, the model)
 docs/       plan, design, research, the RAM map, a 1985-style manual
 build/      pickleball.nes (not committed)
 ```

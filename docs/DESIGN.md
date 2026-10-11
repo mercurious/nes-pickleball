@@ -1,4 +1,4 @@
-# Design: NES Pickleball (2026-10-10, before the build)
+# Design: NES Pickleball (2026-10-10, before the build; revised for the two releases)
 
 The game *Tennis* (1984) would have been if its sport had been pickleball: the same camera, the same two-button
 swing, the same small sprites and umpire chair, with pickleball's court, rules and rhythm, which are different
@@ -19,13 +19,13 @@ rule, and the kitchen, where the point is usually won softly rather than with a 
 
 ## 2. Modes
 
-| mode | who | notes |
-|---|---|---|
-| 1 PLAYER SINGLES | you vs the computer | *Tennis*'s first mode |
-| 1 PLAYER DOUBLES | you + a computer partner vs a computer pair | new; the partner takes directives (section 10) |
-| 2 PLAYERS DOUBLES | two controllers as a team vs a computer pair | *Tennis*'s second mode |
-| 2 PLAYERS SINGLES | controller 1 vs controller 2 | cheap once pad 2 is read; *Tennis* lacked it; decision for the maintainer |
-| EXHIBITION | computer vs computer | the attract mode, and the "watchable contest" for autogamer; chatter on |
+| mode | who | notes | v0.0.2 add-on |
+|---|---|---|---|
+| 1 PLAYER SINGLES | you vs the computer | *Tennis*'s first mode | the score call and the umpire's voice |
+| 1 PLAYER DOUBLES | you + a computer partner vs a computer pair | new; the partner takes directives (section 10) | **the teammate**: your partner talks, takes orders, the model makes its calls |
+| 2 PLAYERS DOUBLES | two controllers as a team vs a computer pair | *Tennis*'s second mode; controller 2 drives the partner completely | the Contra way: a reflex player on the network remote can be controller 2 |
+| 2 PLAYERS SINGLES | controller 1 vs controller 2 | cheap once pad 2 is read; *Tennis* lacked it; decision for the maintainer | a model-plays mode for autogamer later |
+| EXHIBITION | computer vs computer | the attract mode, and the "watchable contest" for autogamer | four voices and the umpire; commentary |
 
 Options on the menu: LEVEL 1-5 (opponents), GAME TO 11 / 15 / 21, ONE GAME / BEST OF 3, LETS: REPLAY (1984) /
 PLAY (modern). SELECT moves the asterisk as in *Tennis*; START begins. START during play pauses with the pause
@@ -149,7 +149,13 @@ reverse-engineers anything. The **mailbox** is the last 16 bytes of RAM:
 | $07FA | MB_CALL | the serve gate: ROM writes 1 = "call the score now"; a sidecar writes 2 = "said"; 0 = idle. The ROM proceeds on 2 or after 90 frames; a sidecar writes $A5 here at startup to announce itself, which also mutes the ROM's DPCM call |
 | $07FB | MB_DIRECTIVE | partner directive from the sidecar: 0 auto, 1 I take the middle, 2 you take the middle, 3 stay back, 4 come up, 5 switch sides now, 6 let me serve/return (handled where legal) |
 | $07FC | MB_CHATTER | bit 0 chatter wanted, bit 1 human calls the score |
-| $07FD-$07FF | reserved | |
+| $07FD | MB_BUBBLE | a phrase code (0 none): the ROM shows the phrase as a 1985 speech bubble ("MINE!", "SWITCH", "GOT IT") over the player in MB_BUBBLE_SLOT for 45 frames, then clears it; the add-on writes it when a voice line starts, so what is said is also seen, and tests can check it without audio |
+| $07FE | MB_BUBBLE_SLOT | the player slot 0-3 (or 4: the umpire's box) |
+| $07FF | reserved | |
+
+**The contract.** Mailbox v1 and the RAM map are part of v0.0.1 and are frozen for v0.0.2: the add-on must not
+need a ROM change. v0.0.1 tests them with a fake sidecar in Lua and with `sidecar/stub.py` on a desktop RetroArch.
+Additions bump `MB_VERSION`, keep every v1 meaning, and ship as a ROM release of their own.
 
 Events (`MB_EVENT`): SCORE_CALL (the call text is derivable from the scores), SERVE, RETURN, THIRD_SHOT, DINK,
 DRIVE, LOB, VOLLEY, SMASH, BOUNCE_IT (the non-hitter thinks the ball is going long), MINE, YOURS, SWITCH,
@@ -161,42 +167,59 @@ The other documented locations: player x/y/z-state per slot, ball x/y/z and velo
 last_hitter, the frame counter, RNG state, menu cursor. Tests and the sidecar include `docs/RAM_MAP.md` by
 address constants generated from the build's symbol file (`tools/ramsyms.py` from `ld65 --dbgfile`).
 
-## 10. The voice layer (sidecar, on the handheld)
+## 10. The teammate add-on (v0.0.2: the sidecar, on the handheld)
+
+The model is autogamer's Contra co-op, moved onto a court. There you play Player 1, a reflex soldier plays Player
+2 from the game's memory, the model makes a partner's calls (cover, lead, hang back, take the weapon, borrow a
+life) each standing until the next, and you hold R1 and tell it what to do. Here:
+
+| Contra co-op | NES Pickleball (1 PLAYER DOUBLES) |
+|---|---|
+| the reflex soldier on RetroArch's network remote (Contra has no computer partner) | **the ROM's own partner AI**, steered through the mailbox directive (DESIGN §7); or, the Contra way, a reflex player on the network remote in 2 PLAYERS DOUBLES, which the ROM supports unchanged |
+| COVER / LEAD / REAR | MIDDLE (I take the middle) / YOURS (you take it); UP (we both go to the line) / BACK (stay back on the third shot) |
+| TAKE / LEAVE the weapon | SWITCH / STAY after a lob; AGGRESSIVE (speed-ups) / PATIENT (dink and reset) |
+| BORROW a life / SIT OUT | no equivalent (no lives); "you serve" is fixed by the rules, so the partner explains why not |
+| the model's calls between screens, with a record of what each call did on that stage | the model's calls **between points**, with a record per call and situation (serving/receiving, score band): points won and lost while the call stood, kept across games in `state/pickleball_record.json` and given back as rates |
+| hold R1, say it; "your call" returns control; anything else goes to the model | the same: `talk.py` (Qwen3-ASR), a phrase map, a spoken acknowledgement at once, free-form remarks answered in the partner's voice 5-9 s later |
+| captions with SHOW_MSG | SHOW_MSG and the ROM's speech bubble (MB_BUBBLE) over the partner |
 
 ```
-RetroArch (fceumm, pickleball.nes)  <-UDP 55355->  sidecar/pickleball_voice.py  --->  pacat (speaker)
-      ^ network remote 55400 (optional: the sidecar can also be a player)      |
-      | mailbox, RAM map                                                       +-- Pocket TTS (tts-server 8093): phrase cache + live lines
-                                                                               +-- Gemma 4 E2B (llama-server): colour lines between points
-                                                                               +-- Qwen3-ASR (llama-server 8091): hold R1, talk to your partner
+RetroArch (fceumm, pickleball.nes)  <-UDP 55355->  sidecar/pickleball_coop.py  --->  pacat (speaker)
+      ^ network remote 55400 (only for the Contra-way partner)                  |
+      | mailbox, RAM map                                                        +-- Pocket TTS (tts-server 8093): phrase cache + live lines
+                                                                                +-- Gemma 4 E4B/E2B (llama-server): the partner's calls and replies
+                                                                                +-- Qwen3-ASR (llama-server 8091): hold R1, talk to your partner
 ```
 
 - **Voices**: one Pocket TTS voice per player slot (four distinct voices from the English pack; `alba` and `jean`
   are known good) and one for the umpire. Each player's lines are rendered by their voice.
 - **Latency**: the score call and all chatter words are **pre-synthesized** at install (or first run) into a WAV
   cache per voice (digits 0-21, "two", "side out", "fault", "mine", "yours", "switch", "bounce it", "out",
-  "nice", "sorry", ...), so a call plays within a frame of the event. Live synthesis (2x real time) is only for
-  the model's lines.
+  "nice", "sorry", "got it", ...), so a line plays within a frame of the event. Live synthesis (2x real time) is
+  only for the model's lines.
 - **The score call**: on MB_CALL = 1 the sidecar reads the scores and the server, plays "four – two – one" in the
   server's voice, then writes 2. A human server's call is spoken by the human's player voice unless MB_CHATTER bit
   1 is set, in which case the human says it (hold R1): the ASR hears it, a right call releases the serve, a wrong
   one makes the opponents challenge ("wrong score!") and the umpire re-call it (6.F.1), a stretch feature.
 - **Chatter**: events -> short phrases with per-voice cooldowns so the court is not a chorus: MINE/YOURS on the
-  owner decision, BOUNCE_IT, SWITCH, "nice" after NICE_SHOT (from the opponent too, at level 5 never), "sorry" after
-  an own fault, "side out", "second server". Volume ducks under the model's lines.
-- **The model**: between points only (E2B, ≤ 12 words, the facts given, the faithfulness guard from autogamer's
-  `narrate.py`: the line must name the right winner and never claim a game that is not over); it answers the
-  human's remarks (ASR text) in the partner's voice, 5-9 s later; a canned acknowledgement ("got it") comes at
-  once when a directive is recognised.
-- **Talking to your partner** (1 PLAYER DOUBLES; hold R1): "I've got the middle" / "you take the middle" ->
-  directive 1/2; "stay back", "hang back" -> 3; "come up", "get to the line" -> 4; "switch" -> 5; "your call" ->
-  0. Anything else goes to the model. The partner confirms out loud. Without a microphone the mode still plays;
-  the partner just decides for itself.
+  owner decision, BOUNCE_IT, SWITCH, "nice" after NICE_SHOT (from the opponent too; at level 5 never), "sorry" after
+  an own fault, "side out", "second server". The game's volume ducks under the model's lines.
+- **The partner's calls**: between points the model gets the score, who serves, the last point (who faulted, how
+  it ended, rally length, the shots) and the record of each call in this situation, and answers with one call
+  (MIDDLE/YOURS, UP/BACK, SWITCH/STAY, AGGRESSIVE/PATIENT) that stands until the next; the sidecar writes the
+  directive and the partner says it ("I've got the middle"). A faithfulness guard (autogamer's `narrate.py`) keeps
+  spoken lines to the facts.
+- **Talking to your partner** (hold R1): "I've got the middle" / "you take the middle" -> directive 1/2; "stay
+  back", "hang back" -> 3; "come up", "get to the line" -> 4; "switch" -> 5; "be patient" / "attack" -> style;
+  "hold up" / "wait" -> freeze the call until "go"; "your call" -> the model decides again. Your order stands until
+  you change it; the model's calls of that kind wait. Anything else ("nice shot", "what's the score?") goes to the
+  model with a short question; it answers in a few words and may change its call to answer you. Without a
+  microphone the mode still plays; the partner decides for itself.
 - **Standalone**: no sidecar, no change: the ROM waits 90 frames at CALL (or plays its own DPCM call) and the
   computer partner plays by its own rules.
-- **autogamer**: a game entry (`pickleball-voice`) that bundles the ROM, launches RetroArch with the usual
-  `--appendconfig` and the sidecar, and a level picker; the first entry that needs no ROM from the player. The
-  integration PR lives in autogamer's repo; this repo ships `sidecar/` and the ROM.
+- **autogamer**: a game entry (`pickleball-coop`) that bundles the ROM, launches RetroArch with the usual
+  `--appendconfig` and the sidecar; real time, no level picker (you are playing too). The integration PR lives in
+  autogamer's repo; this repo ships `sidecar/` and the ROM.
 
 ## 11. Memory budget
 
