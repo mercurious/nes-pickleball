@@ -8,7 +8,7 @@ endif
 CC65 = $(B)cc65
 CA65 = $(B)ca65
 LD65 = $(B)ld65
-CFLAGS = -Oirs --cpu 6502 -t nes -I src -I build
+CFLAGS = -g -Oirs --cpu 6502 -t nes -I src -I build
 CSRC = $(wildcard src/*.c)
 OBJS = build/crt0.o $(patsubst src/%.c,build/%.o,$(CSRC)) build/tables.o build/data.o
 ROM = build/pickleball.nes
@@ -23,21 +23,22 @@ build/spr.chr build/sprdefs.h build/sprites.png: tools/chr.py art/sprites.txt
 
 build/%.o: src/%.c src/kernel.h build/geom.h build/sprdefs.h
 	$(CC65) $(CFLAGS) -o build/$*.s $<
-	$(CA65) -t nes -o $@ build/$*.s
+	$(CA65) -g -t nes -o $@ build/$*.s
 
 build/tables.o: build/tables.c
 	$(CC65) $(CFLAGS) -o build/tables.s $<
-	$(CA65) -t nes -o $@ build/tables.s
+	$(CA65) -g -t nes -o $@ build/tables.s
 
 build/crt0.o: src/crt0.s
-	$(CA65) -t nes -o $@ $<
+	$(CA65) -g -t nes -o $@ $<
 
 build/data.o: src/data.s build/bg.chr build/spr.chr build/court_nt.bin
-	$(CA65) -t nes -o $@ $<
+	$(CA65) -g -t nes -o $@ $<
 
 $(ROM): nes.cfg $(OBJS)
 	$(LD65) -C nes.cfg -o $@ -m build/pickleball.map --dbgfile build/pickleball.dbg $(OBJS) nes.lib
 	python3 tools/check_rom.py $@ build/pickleball.map
+	python3 tools/ramsyms.py build/pickleball.dbg build/ramsyms.json docs/RAM_MAP.md
 
 clean:
 	rm -rf build/*

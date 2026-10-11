@@ -92,7 +92,7 @@ def box(x0, y0, x1, y1):
         for bx in range(x0 // 16, (x1 + 15) // 16):
             blockpal[by][bx] = 1
 box(16, 16, 96, 40)      # score panel: tile cols 2-11, rows 2-4
-box(104, 16, 184, 32)    # call box: tile cols 13-22, rows 2-3
+box(104, 16, 200, 32)    # call box: tile cols 13-24, rows 2-3
 
 # tiles: the font first, then every distinct 8x8 block of the canvas
 tiles = font.tiles()
