@@ -15,6 +15,8 @@ ROM = build/pickleball.nes
 
 all: $(ROM)
 
+$(shell mkdir -p build build/tests)
+
 build/bg.chr build/court_nt.bin build/tables.c build/geom.h build/court.png: tools/court.py tools/font.py
 	python3 tools/court.py build
 

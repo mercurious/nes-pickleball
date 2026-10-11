@@ -24,7 +24,8 @@ def snap():
              vy=s16(zp, A("vy")) / 256, px=u16(zp, A("px")) / 256, py=u16(zp, A("py")) / 256, sw=bss[A("sw_t") - 0x400],
              shots=zp[A("shots")], bounce=zp[A("bounce_side")], live=zp[A("ball_live")], hitter=zp[A("last_hitter")],
              score=(mb[3], mb[4]), server=mb[5], ev_n=mb[7], ev=mb[8], ev_arg=mb[9], call=mb[10],
-             dbg=list(bss[A("dbg") - 0x400: A("dbg") - 0x400 + 8]), vz=s16(zp, A("vz")) / 256, vx=s16(zp, A("vx")) / 256)
+             dbg=list(bss[A("dbg") - 0x400: A("dbg") - 0x400 + 8]), vz=s16(zp, A("vz")) / 256, vx=s16(zp, A("vx")) / 256,
+             pos=[(u16(zp, A("px") + 2 * i) // 256, u16(zp, A("py") + 2 * i) // 256) for i in range(4)])
     return d
 
 for i in range(60):
@@ -53,7 +54,7 @@ while time.time() - t0 < SECS:
     if d is None: time.sleep(0.05); continue
     frames += 1
     if d["ev_n"] != last_ev:
-        last_ev = d["ev_n"]; msg = "%6.1fs EVENT %s arg=%d score=%s state=%s ball=(%.0f,%.0f,%.1f) v=(%.2f,%.2f,%.2f) dbg=%s" % (time.time() - t0, EV[d["ev"]] if d["ev"] < len(EV) else d["ev"], d["ev_arg"], d["score"], ST[d["state"]], d["bx"], d["by"], d["bz"], d["vx"], d["vy"], d["vz"], d["dbg"]); print(msg, flush=True); log.append(msg)
+        last_ev = d["ev_n"]; msg = "%6.1fs EVENT %s arg=%d score=%s state=%s ball=(%.0f,%.0f,%.1f) v=(%.2f,%.2f,%.2f) dbg=%s pos=%s" % (time.time() - t0, EV[d["ev"]] if d["ev"] < len(EV) else d["ev"], d["ev_arg"], d["score"], ST[d["state"]], d["bx"], d["by"], d["bz"], d["vx"], d["vy"], d["vz"], d["dbg"], d["pos"]); print(msg, flush=True); log.append(msg)
     if d["state"] != last_state:
         last_state = d["state"]; served = False
     st = d["state"]; buttons = set()

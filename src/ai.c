@@ -42,14 +42,7 @@ static int height_at_row(unsigned char y)
     if (dv == 0) return -1;
     t = (dy * 16) / dv;
     if (t < 0 || t > 120) return -1;
-    return (bz >> 8) + (((vz >> 4) * t) >> 4) - ((((int)t * t) >> 8) * 10);
-}
-
-static unsigned char opp_mean_x(unsigned char team)
-{
-    unsigned char o = (team ^ 1) << 1;
-    if (!pactive[o + 1]) return px[o] >> 8;
-    return (unsigned char)(((px[o] >> 8) + (px[o + 1] >> 8)) >> 1);
+    return (bz >> 8) + (((vz >> 4) * t) >> 4) - (((((int)t * t) >> 4) * 5) >> 3);
 }
 
 /* when the other side hits, the team decides who takes the ball and whether it is going long */
@@ -74,7 +67,7 @@ static void team_decide(unsigned char team)
     }
     if (tier_of(a) >= 2 && !said_bounce) {            /* a ball that will fly past the baseline: let it go */
         h = height_at_row(team == 0 ? NEAR_Y + 2 : FAR_Y - 2);
-        if (h > 8 && bounce_side == 0) {
+        if (h > 14 && bounce_side == 0 && tier_of(a) >= 3) {
             s = (own[team] == a) ? b : a;
             if (!pactive[s]) s = a;
             event(EV_BOUNCE_IT, s); bubble(s, 5); said_bounce = 2;
@@ -95,12 +88,26 @@ static unsigned char pick_shot(unsigned char s, unsigned char d)
     return (t >= 3 && r < 128) ? SHOT_SOFT : (t == 1 ? SHOT_SOFT : SHOT_HARD);
 }
 
+static unsigned char adist(unsigned char a, unsigned char b) { return a > b ? a - b : b - a; }
+
+/* where to put the shot: the gap between the opponents (their middle or either sideline, whichever is farthest
+   from both), from level 3 up; a scatter around the centre below that */
 static void aim(unsigned char s)
 {
-    unsigned char t = tier_of(s), o = opp_mean_x(TEAM(s)), r = rand8() & 31;
-    if (t <= 2) { ai_aim_x[s] = CENTER_X - 24 + (rand8() & 47); return; }
-    if (o >= CENTER_X) ai_aim_x[s] = CENTER_X - 20 - (t == 5 ? 24 : 12) - (r >> 1);
-    else ai_aim_x[s] = CENTER_X + 20 + (t == 5 ? 24 : 12) + (r >> 1);
+    unsigned char team = TEAM(s), t = tier_of(s), o1 = (team ^ 1) << 1, o2, ly, lx, rx, mx, x1, x2, dl, dr, dm, pick;
+    o2 = o1 + 1;
+    x1 = px[o1] >> 8; x2 = pactive[o2] ? (px[o2] >> 8) : x1;
+    if (t <= 2) { ai_aim_x[s] = CENTER_X - 20 + (rand8() % 41); return; }
+    ly = (team == 0) ? FAR_KIT + 8 : NEAR_KIT - 8;          /* the court's width where the shot lands */
+    lx = side_l[ly - FAR_Y] + 12; rx = side_r[ly - FAR_Y] - 12;
+    mx = (unsigned char)(((unsigned int)x1 + x2) >> 1);
+    dl = adist(lx, x1); if (adist(lx, x2) < dl) dl = adist(lx, x2);
+    dr = adist(rx, x1); if (adist(rx, x2) < dr) dr = adist(rx, x2);
+    dm = adist(mx, x1); if (adist(mx, x2) < dm) dm = adist(mx, x2);
+    pick = mx;
+    if (dl > dm && dl >= dr) pick = lx; else if (dr > dm) pick = rx;
+    if (t < 5 && (rand8() & 3) == 0) pick = (rand8() & 1) ? lx : rx;   /* a little unpredictable below champion */
+    ai_aim_x[s] = pick + (rand8() & 7) - 4;
 }
 
 void ai_set_levels(unsigned char lv)

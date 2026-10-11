@@ -68,7 +68,7 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind)
         if (T > 120) T = 120;
         tn = ((unsigned int)d << 8) / (unsigned int)vmag;
         vz = 10 * (int)T - z0 / (int)T;
-        zn = (z0 >> 8) + (((vz >> 4) * tn) >> 4) - ((((int)tn * tn) >> 8) * 10);
+        zn = (z0 >> 8) + (((vz >> 4) * tn) >> 4) - (((((int)tn * tn) >> 4) * 5) >> 3);
         if (zn >= NET_H + 2 || vmag <= 160) break;
         vmag -= (kind == SHOT_HARD) ? 128 : 48;
     }
@@ -84,7 +84,10 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind)
         if (!IS_NEAR(s)) vx = -vx;                       /* the far player's racket side is our left */
         vx += ((int)(PX(CENTER_X) - bx) / (int)T) / 2;   /* every shot drifts half-way back toward the centre line */
     } else {
+        int lim = (vmag >> 1) + (vmag >> 2);              /* no sharper than 37 degrees */
         vx = (int)(PX(ai_aim_x[s]) - bx) / (int)T + (rand8() & 31) - 16;
+        if (vx > lim) vx = lim;
+        if (vx < -lim) vx = -lim;
     }
     vy = IS_NEAR(s) ? -vmag : vmag;
     if (bz < (int)PX(2)) bz = PX(2);
