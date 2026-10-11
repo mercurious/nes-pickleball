@@ -24,6 +24,7 @@ unsigned char game_to, best_of3, lets_replay, dead_reason, point_winner, rally_l
 unsigned char pads[2], trigs[2];
 unsigned char hud_dirty, call_dirty;
 char call_text[12];
+unsigned char sidecar;                       /* a sidecar announced itself (MB_CALL = $A5): it calls the score */
 
 #pragma bss-name(push, "MAILBOX")
 unsigned char mb_magic, mb_version, mb_state, mb_score_a, mb_score_b, mb_server, mb_mode, mb_event_n,
@@ -76,7 +77,8 @@ void match_init(unsigned char m, unsigned char lv)
     ball_live = 0; shots = 0; bounce_side = 0; last_hitter = 0xFF;
     state = ST_PRESERVE; state_t = 0;
     mb_magic = 0x5B; mb_version = 1; mb_directive = 0; mb_bubble = 0;
-    if (mb_call != 0xA5) mb_call = 0;          /* a sidecar's announcement survives a new match */
+    if (mb_call == 0xA5) sidecar = 1;          /* the announcement is kept as a flag across matches */
+    mb_call = 0;
     hud_dirty = 1;
 }
 
@@ -134,8 +136,9 @@ static void start_serve(void)
     hud_call(call_text);
     ai_new_rally();
     event(EV_SCORE_CALL, server_slot);
-    mb_call = (mb_call == 0xA5) ? 0xA5 : 1;      /* ask a sidecar for the call; 0xA5 = one is present and will answer */
-    if (mb_call != 0xA5) speech_call();          /* no sidecar: the cartridge calls it */
+    if (mb_call == 0xA5) sidecar = 1;
+    mb_call = 1;                                 /* "call the score now"; a sidecar answers with 2 */
+    if (!sidecar) speech_call();                 /* no sidecar: the cartridge calls it */
     state = ST_CALL; state_t = 0;
     hud_dirty = 1;
 }
@@ -158,7 +161,7 @@ void end_rally(unsigned char reason, unsigned char loser_team)
     if (reason == R_LET) jingle(JG_NONE);
     else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { jingle(point_winner == serving_team ? JG_POINT : JG_SIDEOUT); if (rally_len >= 6) applause(70); }
     else jingle(JG_FAULT);
-    if (mb_call != 0xA5) {
+    if (!sidecar) {
         if (reason == R_LET) speech_word(W_LET);
         else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { if (point_winner != serving_team) speech_word(W_SIDEOUT); }
         else speech_word(W_FAULT);
@@ -177,7 +180,7 @@ static void apply_point(void)
             ++games[w];
             hud_call("GAME");
             jingle(JG_GAME); applause(120);
-            if (mb_call != 0xA5) speech_word(W_GAME);
+            if (!sidecar) speech_word(W_GAME);
             event(EV_GAME_OVER, w);
             state = ST_GAMEOVER; state_t = 0; hud_dirty = 1;
             return;
@@ -214,8 +217,9 @@ void match_update(void)
         break;
     case ST_CALL:
         ++state_t;
-        if (mb_call == 2 || (mb_call != 0xA5 && state_t >= CALL_FRAMES && !speech_busy()) || state_t >= 240) {
-            if (mb_call != 0xA5) mb_call = 0;
+        if (mb_call == 0xA5) { sidecar = 1; mb_call = 1; }
+        if (mb_call == 2 || (!sidecar && state_t >= CALL_FRAMES && !speech_busy()) || state_t >= 240) {
+            mb_call = 0;
             state = ST_SERVE_DROP; state_t = 0;
             ball_live = 1; vz = 0;
         }

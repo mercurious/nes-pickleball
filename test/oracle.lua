@@ -31,6 +31,9 @@ T.run(function()
       last_n = n
       local ev, arg = mbx(8), mbx(9)
       local st = T.rd(T.sym("state"))
+      if PB.VERBOSE and points < 40 then
+        print(string.format("  f%d ev=%d arg=%d n=%d rom %d-%d srv=%d | model %d-%d serving=%d num=%d slot=%d", T.frames, ev, arg, n, mbx(3), mbx(4), mbx(5), m.score[0], m.score[1], m.serving, m.num, m.slot))
+      end
       if ev == EV.SCORE_CALL then
         -- the ROM's score, server and position must match the model before every serve
         local ok = true

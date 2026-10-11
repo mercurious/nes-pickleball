@@ -18,7 +18,7 @@ The full RAM map with every other variable is generated into `docs/RAM_MAP.md` b
 | $07F7 | MB_EVENT_N | ROM | increments on every event; poll this |
 | $07F8 | MB_EVENT | ROM | the last event's code (below) |
 | $07F9 | MB_EVENT_ARG | ROM | the slot (0-3) or team (0-1) the event concerns |
-| $07FA | MB_CALL | both | the serve gate. The ROM writes 1 when it wants the score called; a sidecar that has announced itself (by writing $A5 here when it starts) sees 1, speaks, and writes 2; the ROM then serves (and writes 0... it keeps $A5 while a sidecar is present). Without a sidecar the ROM proceeds after 90 frames; with one, after 240 frames at most. |
+| $07FA | MB_CALL | both | the serve gate. A sidecar announces itself by writing $A5 here once (any time; the ROM remembers it until power-off). The ROM writes 1 when it wants the score called; the sidecar speaks and writes 2; the ROM then serves and writes 0. Without an announcement the ROM calls the score itself (its DPCM voice) and proceeds after 90 frames; with one it waits for the 2, 240 frames at most. |
 | $07FB | MB_DIRECTIVE | sidecar | an order for the computer partner of a human (1P DOUBLES): 0 its own call, 1 it takes the middle, 2 it leaves the middle, 3 stays back, 4 comes up to the line, 5 covers the other half, 6 plays soft (patient), 7 attacks every ball above the net |
 | $07FC | MB_CHATTER | sidecar | bit 0 chatter wanted, bit 1 the human calls the score (reserved for v0.0.2) |
 | $07FD | MB_BUBBLE | sidecar | a phrase code: the ROM shows it as a speech bubble beside the player in MB_BUBBLE_SLOT for 45 frames, then clears it and this byte. 1 MINE! 2 YOURS! 3 SWITCH! 4 GOT IT 5 BOUNCE IT 6 NICE! 7 SORRY 8 OUT! 9 GO! 10 BACK! 11 UP! 12 MIDDLE! 13 STAY! 14 NO! 15 GOOD 16 HELP! |
