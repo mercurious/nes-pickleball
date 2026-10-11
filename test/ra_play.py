@@ -34,7 +34,20 @@ else:
     sys.exit("no RetroArch on UDP 55355")
 time.sleep(1.0)
 t0 = time.time(); last_ev = None; last_state = None; served = False; frames = 0; log = []
+# the menu: --mode N (0 singles 1 1P doubles 2 2P doubles 3 2P singles 4 exhibition), --level N, --bo3, --to15
+def opt(name, default=None):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+md = int(opt("--mode", 0)); lv = int(opt("--level", 1))
+time.sleep(2.5)
+for i in range(md): pad.tap("right", 0.1); time.sleep(0.25)
+pad.tap("select", 0.1); time.sleep(0.25)
+for i in range(lv - 1): pad.tap("right", 0.1); time.sleep(0.25)
+if "--to15" in sys.argv:
+    pad.tap("select", 0.08); time.sleep(0.15); pad.tap("right", 0.08); time.sleep(0.15); pad.tap("select", 0.08); time.sleep(0.15)
+elif "--bo3" in sys.argv:
+    pad.tap("select", 0.08); time.sleep(0.15); pad.tap("select", 0.08); time.sleep(0.15); pad.tap("right", 0.08); time.sleep(0.15)
 pad.tap("start", 0.2); time.sleep(0.3)
+HUMAN = md != 4
 while time.time() - t0 < SECS:
     d = snap()
     if d is None: time.sleep(0.05); continue
@@ -44,6 +57,7 @@ while time.time() - t0 < SECS:
     if d["state"] != last_state:
         last_state = d["state"]; served = False
     st = d["state"]; buttons = set()
+    if not HUMAN: time.sleep(0.03); continue
     if st == 2:   # SERVE_DROP: our serve when the server is slot 0 (near); press A at hip height
         if (d["server"] >> 3) == 0 and 3 <= d["bz"] <= 12 and not served: pad.tap("a", 0.05); served = True
     elif st in (3, 4):
@@ -62,6 +76,8 @@ while time.time() - t0 < SECS:
             if not ((d["shots"] in (1, 2)) and d["bounce"] == 0):
                 buttons.add("a" if d["bz"] >= 10 else "b")
     pad.hold(buttons)
+    if "--shots" in sys.argv and int(time.time() - t0) % 20 == 10 and not getattr(sys, "_shot", 0) == int(time.time() - t0):
+        sys._shot = int(time.time() - t0); ra.cmd("SCREENSHOT", reply=False)
     time.sleep(0.016)
 pad.release_all()
 ra.cmd("SCREENSHOT", reply=False)

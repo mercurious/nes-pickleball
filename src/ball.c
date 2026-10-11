@@ -1,5 +1,6 @@
 /* The ball: flight, drag, the net, bounces, and what a bounce means (in, out, short, double). */
 #include "game.h"
+#include "sound.h"
 
 static unsigned int prev_by;
 
@@ -40,6 +41,7 @@ void ball_update(void)
         }
         if (bz < (int)PX(NET_H) + 128) {              /* clipped the tape: a let on a serve, a net cord otherwise */
             vy >>= 1; vz = 160;
+            sfx(SFX_NETCORD);
             if (shots == 1 && lets_replay) { end_rally(R_LET, 0); return; }
         }
     }
@@ -48,6 +50,7 @@ void ball_update(void)
         vz = -(vz - (vz >> 2) - (vz >> 3));
         if (vz < 64) vz = 0;
         vx -= vx >> 3; vy -= vy >> 3;
+        if (vz) sfx(SFX_BOUNCE);
         ++bounce_side;
         judge_bounce();
         return;

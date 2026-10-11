@@ -1,6 +1,9 @@
 /* The players: intent (pad or AI), movement, the swing, contact, the shot model, the serve. */
 #include "game.h"
+#include "sound.h"
 
+extern unsigned char ai_aim_x[4];
+extern unsigned char team_level[2];
 unsigned char dbg[8];   /* the last shot: kind, d, L, T, vmag/8, vz/8, z0 px, tries */
 
 static const unsigned char TARGET_X[2][2] = { { 156, 100 }, { 172, 84 } };  /* [team][server on the screen's right] */
@@ -56,7 +59,9 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind)
         ev = EV_DINK;
     }
     if (!phuman[s]) {                                    /* the computer misjudges, less at higher levels */
-        L += (rand8() % (11 - level * 2)) - (5 - level);
+        static const unsigned char ERR[6] = { 10, 10, 8, 6, 4, 2 };
+        unsigned char e = ERR[team_level[TEAM(s)]];
+        L += (rand8() % (2 * e + 1)) - e;
     }
     for (tries = 0; tries < 4; ++tries) {
         T = ((unsigned int)(d + L) << 8) / (unsigned int)vmag; if (T < 4) T = 4;
@@ -73,15 +78,20 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind)
     aim = 4 - lead;                                      /* early (ball still in front) aims one way, late the other */
     if (aim > 10) aim = 10; if (aim < -10) aim = -10;
     if (!phuman[s]) aim += (rand8() & 3) - 1;
-    vx = (aim * vmag) / 32;
-    if (sw_side[s]) vx = -vx;                            /* backhand: mirrored */
-    if (!IS_NEAR(s)) vx = -vx;                           /* the far player's racket side is our left */
-    vx += ((int)(PX(CENTER_X) - bx) / (int)T) / 2;       /* every shot drifts half-way back toward the centre line */
+    if (phuman[s]) {
+        vx = (aim * vmag) / 32;
+        if (sw_side[s]) vx = -vx;                        /* backhand: mirrored */
+        if (!IS_NEAR(s)) vx = -vx;                       /* the far player's racket side is our left */
+        vx += ((int)(PX(CENTER_X) - bx) / (int)T) / 2;   /* every shot drifts half-way back toward the centre line */
+    } else {
+        vx = (int)(PX(ai_aim_x[s]) - bx) / (int)T + (rand8() & 31) - 16;
+    }
     vy = IS_NEAR(s) ? -vmag : vmag;
     if (bz < (int)PX(2)) bz = PX(2);
     bounce_side = 0;
     last_hitter = s;
     ++shots; ++rally_len;
+    sfx(kind == SHOT_HARD ? SFX_HIT_HARD : SFX_HIT_SOFT);
     if (shots == 2) event(EV_RETURN, s);
     else if (shots == 3) event(EV_THIRD_SHOT, s);
     else event(ev, s);
@@ -95,7 +105,7 @@ void __fastcall__ serve_hit(unsigned char s)
     int z0, tx;
     z0 = bz; if (z0 < (int)PX(1)) z0 = PX(1);
     L = 24 + ((z0 >> 8) * 3) / 2;                       /* a ball hit high goes deep; above the waist it goes long */
-    if (!phuman[s]) L += (rand8() % (9 - level)) - (4 - level / 2);
+    if (!phuman[s]) L += (rand8() % (9 - team_level[TEAM(s)])) - (4 - team_level[TEAM(s)] / 2);
     T = ((unsigned int)(d + L) << 8) / 512;
     vz = 10 * (int)T - z0 / (int)T;
     tx = TARGET_X[TEAM(s)][(px[s] >> 8) >= CENTER_X];
@@ -109,6 +119,7 @@ void __fastcall__ serve_hit(unsigned char s)
     shots = 1; rally_len = 1;
     state = ST_FLIGHT; state_t = 0;
     pstate[s] = 2; anim_t[s] = 0;
+    sfx(SFX_SERVE);
     event(EV_SERVE, s);
 }
 

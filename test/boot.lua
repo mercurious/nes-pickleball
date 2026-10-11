@@ -1,13 +1,14 @@
--- Boot test: the ROM runs, the title shows, START reaches the court, the player walks.
-local T = dofile(os.getenv("PB_TESTLIB") or "test/lib.lua")
+-- Boot test: the ROM runs, the NMI counts frames, START reaches the court, the match state machine starts.
 T.run(function()
   T.step(60)
-  T.check(T.rd(0x0000) ~= nil, "RAM readable")
-  local fc0 = T.rd(0x0000)              -- frame_count is the first zero-page byte of the kernel
+  local fc0 = T.rd(T.sym("frame_count"))
   T.step(30)
-  T.check(T.rd(0x0000) ~= fc0, "NMI runs (frame counter advances)")
-  T.press({start = true}); T.step(2); T.press({}); T.step(10)
-  T.press({right = true}); T.step(20); T.press({})
+  T.check(T.rd(T.sym("frame_count")) ~= fc0, "NMI runs (frame counter advances)")
+  T.tap("start", 3)
+  T.step(10)
+  T.check(T.rd(T.sym("mb_magic")) == 0x5B, "mailbox magic after START")
+  T.check(T.rd(T.sym("state")) == 1, "the match waits at the score call (state CALL)")
+  T.step(120)
+  T.check(T.rd(T.sym("state")) >= 2, "the serve begins after the call's 90 frames")
   emu.takeScreenshot()
-  T.check(true, "screenshot taken")
 end, "boot")

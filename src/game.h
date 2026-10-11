@@ -81,11 +81,15 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind);
 unsigned char __fastcall__ in_reach(unsigned char s);
 void __fastcall__ serve_hit(unsigned char s);
 void __fastcall__ ai_intent(unsigned char s);
+void ai_new_rally(void);
+void ai_set_levels(unsigned char lv);
+extern unsigned char ai_mid[4];
 void draw_match(void);
 
 void hud_score(void);
 void __fastcall__ hud_call(const char *s);
 void hud_update(void);
+void __fastcall__ bubble(unsigned char slot, unsigned char code);
 void __fastcall__ fmt_call(unsigned char with_server);
 
 #endif

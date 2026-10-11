@@ -1,6 +1,9 @@
 /* The match: states, positions, the serving sequence, scoring, the umpire's calls, the mailbox. */
 #include "game.h"
 #include "text.h"
+#include "sound.h"
+#include "speech.h"
+#include "speech_words.h"
 
 #pragma bss-name(push, "ZEROPAGE")
 unsigned int bx, by;
@@ -54,6 +57,7 @@ void match_init(unsigned char m, unsigned char lv)
 {
     unsigned char i;
     mode = m; level = lv;
+    ai_set_levels(lv);
     doubles = (m == MODE_1P_DOUBLES || m == MODE_2P_DOUBLES || m == MODE_EXHIBITION);
     for (i = 0; i < 4; ++i) {
         pactive[i] = doubles ? 1 : ((i & 1) == 0);
@@ -65,7 +69,6 @@ void match_init(unsigned char m, unsigned char lv)
     if (m == MODE_2P_DOUBLES) phuman[1] = 2;
     if (m == MODE_2P_SINGLES) phuman[2] = 2;
     score[0] = score[1] = 0; games[0] = games[1] = 0;
-    game_to = 11; best_of3 = 0; lets_replay = 1;
     start_server[0] = 0; start_server[1] = 2;
     serving_team = 0;
     server_num = 2;                              /* the starting server serves as "2" */
@@ -128,8 +131,10 @@ static void start_serve(void)
     bz = PX(30); vx = 0; vy = 0; vz = 0;
     fmt_call(doubles);
     hud_call(call_text);
+    ai_new_rally();
     event(EV_SCORE_CALL, server_slot);
     mb_call = (mb_call == 0xA5) ? 0xA5 : 1;      /* ask a sidecar for the call; 0xA5 = one is present and will answer */
+    if (mb_call != 0xA5) speech_call();          /* no sidecar: the cartridge calls it */
     state = ST_CALL; state_t = 0;
     hud_dirty = 1;
 }
@@ -149,6 +154,14 @@ void end_rally(unsigned char reason, unsigned char loser_team)
     event(EVS[reason], loser_team);
     if (WORDS[reason][0]) hud_call(WORDS[reason]);
     else hud_call(point_winner == serving_team ? "POINT" : (doubles && server_num == 1 ? "2ND SERVER" : "SIDE OUT"));
+    if (reason == R_LET) jingle(JG_NONE);
+    else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { jingle(point_winner == serving_team ? JG_POINT : JG_SIDEOUT); if (rally_len >= 6) applause(70); }
+    else jingle(JG_FAULT);
+    if (mb_call != 0xA5) {
+        if (reason == R_LET) speech_word(W_LET);
+        else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { if (point_winner != serving_team) speech_word(W_SIDEOUT); }
+        else speech_word(W_FAULT);
+    }
 }
 
 static void apply_point(void)
@@ -162,6 +175,8 @@ static void apply_point(void)
         if (score[w] >= game_to && score[w] - score[o] >= 2) {
             ++games[w];
             hud_call("GAME");
+            jingle(JG_GAME); applause(120);
+            if (mb_call != 0xA5) speech_word(W_GAME);
             event(EV_GAME_OVER, w);
             state = ST_GAMEOVER; state_t = 0; hud_dirty = 1;
             return;
@@ -198,7 +213,7 @@ void match_update(void)
         break;
     case ST_CALL:
         ++state_t;
-        if (mb_call == 2 || (mb_call != 0xA5 && state_t >= CALL_FRAMES) || (mb_call == 0xA5 && state_t >= 240)) {
+        if (mb_call == 2 || (mb_call != 0xA5 && state_t >= CALL_FRAMES && !speech_busy()) || state_t >= 240) {
             if (mb_call != 0xA5) mb_call = 0;
             state = ST_SERVE_DROP; state_t = 0;
             ball_live = 1; vz = 0;
@@ -213,6 +228,11 @@ void match_update(void)
     case ST_FLIGHT:
     case ST_RALLY:
         ++state_t;
+        if (mb_reserved) {                 /* the test hook: 1 or 2 ends the rally at once, team A or B losing */
+            s = (mb_reserved - 1) & 1; mb_reserved = 0;
+            end_rally(R_PASSED, s);
+            break;
+        }
         players_update();
         if (ball_live) ball_update();
         for (s = 0; s < 4; ++s) {         /* momentum after a volley carries a player into the kitchen */
@@ -232,6 +252,13 @@ void match_update(void)
         break;
     case ST_GAMEOVER:
         ++state_t;
+        if (state_t == 200 && best_of3 && games[0] < 2 && games[1] < 2) {   /* the next game of the match */
+            score[0] = score[1] = 0;
+            serving_team = (games[0] + games[1]) & 1;
+            server_num = 2; server_slot = start_server[serving_team];
+            hud_dirty = 1;
+            start_serve();
+        }
         break;
     }
     mb_state = state;
