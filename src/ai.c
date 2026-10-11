@@ -174,9 +174,13 @@ void __fastcall__ ai_intent(unsigned char s)
         typ = (t >= 2 && !stay_back) ? line_y : base_y;
         if (t == 1) typ = base_y;
         if (pactive[partner]) {
-            if (coming) txp = (px[partner] >> 8) < CENTER_X ? CENTER_X + 36 : CENTER_X - 36;
+            /* cover the other half, a quarter of the court's width at this depth from the centre */
+            unsigned char row = py[s] >> 8, off;
+            if (row < FAR_Y) row = FAR_Y; if (row > NEAR_Y) row = NEAR_Y;
+            off = (side_r[row - FAR_Y] - side_l[row - FAR_Y]) >> 2;
+            if (coming) txp = (px[partner] >> 8) < CENTER_X ? CENTER_X + off : CENTER_X - off;
             else txp = home_x[s];
-            if (mb_directive == 5 && phuman[partner]) txp = (px[partner] >> 8) < CENTER_X ? CENTER_X + 36 : CENTER_X - 36;
+            if (mb_directive == 5 && phuman[partner]) txp = (px[partner] >> 8) < CENTER_X ? CENTER_X + off : CENTER_X - off;
         } else if (!coming) {
             txp = CENTER_X + (IS_NEAR(s) ? -8 : 8);
         }

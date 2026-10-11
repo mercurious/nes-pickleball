@@ -32,7 +32,9 @@ void ball_update(void)
     }
     prev_by = by;
     bx += vx; by += vy; bz += vz; vz -= G_FP;
-    vx -= vx >> 7; vy -= vy >> 7;
+    /* drag, the same for both directions (an arithmetic shift of a negative value rounds away from zero) */
+    if (vx < 0) vx += (-vx) >> 7; else vx -= vx >> 7;
+    if (vy < 0) vy += (-vy) >> 7; else vy -= vy >> 7;
     if ((prev_by < PX(NET_Y)) != (by < PX(NET_Y))) {  /* crossing the net line */
         if (bz < (int)PX(NET_H) - 256) {
             by = prev_by; vx = 0; vy = 0; vz = 0;
