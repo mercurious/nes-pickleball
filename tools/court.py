@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""The court screen: draws the perspective court, net, umpire chair, HUD boxes on a 4-colour canvas, cuts it into
+tiles (font first, ids 0..), and writes build/bg.chr, build/court_nt.bin (960 + 64 bytes), build/geom.h,
+build/tables.c (sideline tables) and build/court.png (a preview). Usage: court.py build"""
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import font
+
+OUT = sys.argv[1] if len(sys.argv) > 1 else "build"
+W, H = 256, 240
+FAR_Y, NET_Y, NEAR_Y = 72, 136, 200          # far baseline, net base, near baseline (screen rows)
+FAR_KIT, NEAR_KIT = 116, 156                 # kitchen lines (7 ft = 20 px)
+NET_TOP = 128                                # the net band is rows 128..135, its base at 136
+CENTER_X = 128
+
+def left(y):  return 72 - ((y - 72) >> 2)    # the left sideline's x at row y (y 72..200)
+def right(y): return 184 + ((y - 72) >> 2)
+
+cv = [[0] * W for _ in range(H)]             # colour indices 0-3 (palette 0 everywhere but the boxes/chair)
+blockpal = [[0] * 16 for _ in range(15)]     # palette per 16x16 attribute block
+
+# the court: surround 0, court 1, kitchen 3, lines 2
+for y in range(FAR_Y, NEAR_Y + 1):
+    for x in range(left(y), right(y) + 1):
+        cv[y][x] = 3 if FAR_KIT <= y <= NEAR_KIT else 1
+for y in range(FAR_Y, NEAR_Y + 1):
+    cv[y][left(y)] = 2
+    cv[y][right(y)] = 2
+for y in (FAR_Y, NEAR_Y, FAR_KIT, NEAR_KIT):
+    for x in range(left(y), right(y) + 1):
+        cv[y][x] = 2
+for y in list(range(FAR_Y, FAR_KIT + 1)) + list(range(NEAR_KIT, NEAR_Y + 1)):
+    cv[y][CENTER_X] = 2
+# the net: a white tape on top, a mesh below, the base tape at NET_Y, posts beyond the sidelines
+nl, nr = left(NET_Y) - 4, right(NET_Y) + 4
+for x in range(nl, nr + 1):
+    cv[NET_TOP][x] = 2
+    cv[NET_Y][x] = 2
+    for y in range(NET_TOP + 1, NET_Y):
+        cv[y][x] = 2 if ((x + y) & 1) == 0 else cv[y][x]
+for x in (nl - 2, nl - 1, nr + 1, nr + 2):
+    for y in range(NET_TOP - 2, NET_Y + 1):
+        cv[y][x] = 0
+# the umpire's chair at the right post, palette 3 (0 surround, 1 wood, 2 skin, 3 white): a tall chair, a figure on top
+CHX, CHY = 210, 104
+chair = [
+    "......33........",
+    ".....3333.......",
+    ".....3223.......",
+    ".....2222.......",
+    "......22........",
+    ".....3333.......",
+    "....333333......",
+    "....333333......",
+    "....113311......",
+    "....1111111.....",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "...1.111111.1...",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "...1........1...",
+    "..11........11..",
+    "..11........11..",
+    "..11........11..",
+    "..11........11..",
+    "..11........11..",
+    "..11........11..",
+    "..11........11..",
+    "1111........1111",
+    "1111........1111",
+    "................",
+    "................",
+]
+for r, row in enumerate(chair):
+    for c, ch in enumerate(row):
+        if ch != ".":
+            cv[CHY + r][CHX + c] = int(ch)
+for by in range(CHY // 16, (CHY + 32) // 16):
+    blockpal[by][CHX // 16] = 3
+# HUD boxes, palette 1 (0 surround, 1 black, 2 white, 3 yellow): the score panel and the umpire's call box
+def box(x0, y0, x1, y1):
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            cv[y][x] = 2 if (y in (y0, y1 - 1) or x in (x0, x1 - 1)) else 1
+    for by in range(y0 // 16, (y1 + 15) // 16):
+        for bx in range(x0 // 16, (x1 + 15) // 16):
+            blockpal[by][bx] = 1
+box(16, 16, 96, 40)      # score panel: tile cols 2-11, rows 2-4
+box(104, 16, 184, 32)    # call box: tile cols 13-22, rows 2-3
+
+# tiles: the font first, then every distinct 8x8 block of the canvas
+tiles = font.tiles()
+index = {}
+for i, t in enumerate(tiles):
+    index.setdefault(tuple(map(tuple, t)), i)
+nt = []
+for ty in range(30):
+    for tx in range(32):
+        t = tuple(tuple(cv[ty * 8 + r][tx * 8: tx * 8 + 8]) for r in range(8))
+        if t not in index:
+            index[t] = len(tiles)
+            tiles.append([list(r) for r in t])
+        nt.append(index[t])
+assert len(tiles) <= 256, "too many background tiles: %d" % len(tiles)
+attr = bytearray(64)
+for by in range(15):
+    for bx in range(16):
+        shift = ((by & 1) << 2) | ((bx & 1) << 1)
+        attr[(by >> 1) * 8 + (bx >> 1)] |= blockpal[by][bx] << shift
+
+def encode(t):
+    lo = bytes(sum(((t[r][c] & 1) << (7 - c)) for c in range(8)) for r in range(8))
+    hi = bytes(sum(((t[r][c] >> 1) << (7 - c)) for c in range(8)) for r in range(8))
+    return lo + hi
+
+os.makedirs(OUT, exist_ok=True)
+open(os.path.join(OUT, "bg.chr"), "wb").write(b"".join(encode(t) for t in tiles) + b"\0" * (16 * (256 - len(tiles))))
+open(os.path.join(OUT, "court_nt.bin"), "wb").write(bytes(nt) + bytes(attr))
+with open(os.path.join(OUT, "geom.h"), "w") as f:
+    f.write("/* generated by tools/court.py: the court's screen geometry */\n")
+    for k, v in [("FAR_Y", FAR_Y), ("NET_Y", NET_Y), ("NEAR_Y", NEAR_Y), ("FAR_KIT", FAR_KIT), ("NEAR_KIT", NEAR_KIT),
+                 ("NET_TOP", NET_TOP), ("CENTER_X", CENTER_X), ("FONT_TILES", len(font.ORDER)), ("BG_TILES", len(tiles)),
+                 ("FAR_LEFT", left(FAR_Y)), ("FAR_RIGHT", right(FAR_Y)), ("NEAR_LEFT", left(NEAR_Y)), ("NEAR_RIGHT", right(NEAR_Y))]:
+        f.write("#define %s %d\n" % (k, v))
+    f.write("extern const unsigned char side_l[%d];\nextern const unsigned char side_r[%d];\n" % (NEAR_Y - FAR_Y + 1, NEAR_Y - FAR_Y + 1))
+with open(os.path.join(OUT, "tables.c"), "w") as f:
+    f.write("/* generated by tools/court.py: sideline x per row, index = y - FAR_Y */\n")
+    f.write("const unsigned char side_l[%d] = {%s};\n" % (NEAR_Y - FAR_Y + 1, ",".join(str(left(y)) for y in range(FAR_Y, NEAR_Y + 1))))
+    f.write("const unsigned char side_r[%d] = {%s};\n" % (NEAR_Y - FAR_Y + 1, ",".join(str(right(y)) for y in range(FAR_Y, NEAR_Y + 1))))
+try:
+    from PIL import Image
+    pals = {0: [(16, 72, 24), (56, 144, 56), (252, 252, 252), (96, 176, 80)],
+            1: [(16, 72, 24), (0, 0, 0), (252, 252, 252), (248, 216, 0)],
+            3: [(16, 72, 24), (136, 80, 24), (252, 200, 160), (252, 252, 252)]}
+    img = Image.new("RGB", (W, H))
+    for y in range(H):
+        for x in range(W):
+            img.putpixel((x, y), pals[blockpal[y // 16][x // 16]][cv[y][x]])
+    img.resize((W * 3, H * 3), Image.NEAREST).save(os.path.join(OUT, "court.png"))
+except ImportError:
+    pass
+print("court: %d background tiles of 256 (font %d)" % (len(tiles), len(font.ORDER)))
