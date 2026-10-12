@@ -1,0 +1,59 @@
+diff --git a/Core/Debugger/LuaApi.cpp b/Core/Debugger/LuaApi.cpp
+index 5e4e98e..7780092 100644
+--- a/Core/Debugger/LuaApi.cpp
++++ b/Core/Debugger/LuaApi.cpp
+@@ -15,6 +15,7 @@
+ #include "Shared/MessageManager.h"
+ #include "Shared/CheatManager.h"
+ #include "Shared/RewindManager.h"
++#include "Shared/Audio/SoundMixer.h"
+ #include "Shared/SaveStateManager.h"
+ #include "Shared/Emulator.h"
+ #include "Shared/Video/BaseVideoFilter.h"
+@@ -136,6 +137,8 @@ int LuaApi::GetLibrary(lua_State* lua)
+ 		{ "rewind", LuaApi::Rewind },
+ 
+ 		{ "takeScreenshot", LuaApi::TakeScreenshot },
++		{ "startWaveRecording", LuaApi::StartWaveRecording },
++		{ "stopWaveRecording", LuaApi::StopWaveRecording },
+ 
+ 		{ "isKeyPressed", LuaApi::IsKeyPressed },
+ 		{ "getPressedKeys", LuaApi::GetPressedKeys },
+@@ -911,6 +914,24 @@ int LuaApi::TakeScreenshot(lua_State* lua)
+ 	return l.ReturnCount();
+ }
+ 
++//records what the sound mixer outputs to a WAV file (the same path as the UI's Sound Recorder)
++int LuaApi::StartWaveRecording(lua_State* lua)
++{
++	LuaCallHelper l(lua);
++	string path = l.ReadString();
++	checkparams();
++	_emu->GetSoundMixer()->StartRecording(path);
++	return l.ReturnCount();
++}
++
++int LuaApi::StopWaveRecording(lua_State* lua)
++{
++	LuaCallHelper l(lua);
++	checkparams();
++	_emu->GetSoundMixer()->StopRecording();
++	return l.ReturnCount();
++}
++
+ int LuaApi::IsKeyPressed(lua_State* lua)
+ {
+ 	LuaCallHelper l(lua);
+diff --git a/Core/Debugger/LuaApi.h b/Core/Debugger/LuaApi.h
+index 4c7e939..f0c0f52 100644
+--- a/Core/Debugger/LuaApi.h
++++ b/Core/Debugger/LuaApi.h
+@@ -72,6 +72,8 @@ public:
+ 	static int Rewind(lua_State* lua);
+ 
+ 	static int TakeScreenshot(lua_State* lua);
++	static int StartWaveRecording(lua_State* lua);
++	static int StopWaveRecording(lua_State* lua);
+ 
+ 	static int CreateSavestate(lua_State* lua);
+ 	static int LoadSavestate(lua_State* lua);
