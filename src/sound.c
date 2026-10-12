@@ -23,8 +23,10 @@
 unsigned char snd_style;
 unsigned char dmc_fixes;                             /* how many samples were cut off (for test/cues.lua) */
 static unsigned char dmc_live, dmc_end;             /* a sample is playing; the frame it is done */
-static unsigned char dmc_busy(void) { return (signed char)(dmc_end - frame_count) > 0; }
-static unsigned char vq[8], vqn, vqi, vgap, vwas;   /* the voice: a queue of words, a breath between them */
+/* a frame number is a byte, so "not reached yet" holds only while it is within 127 frames ahead: each deadline
+   has a flag that snd_update clears once it is reached, or it would come round again 128 frames later */
+static unsigned char dmc_busy(void) { return dmc_live && (signed char)(dmc_end - frame_count) > 0; }
+static unsigned char vq[8], vqn, vqi, vgap, vgap_on, vwas;   /* the voice: a queue of words, a breath between them */
 static unsigned char pend_jingle;                    /* a jingle waits until the umpire has spoken */
 
 static void dmc_play(unsigned char id)
@@ -43,7 +45,7 @@ static void dmc_play(unsigned char id)
 void snd_init(void)
 {
     pently_init();
-    vqn = 0; vqi = 0; vgap = frame_count; pend_jingle = 0;
+    vqn = 0; vqi = 0; vgap_on = 0; pend_jingle = 0;
     snd_on = 1;                                       /* the NMI runs Pently from now on */
 }
 
@@ -109,7 +111,7 @@ static void number(unsigned char n)
 
 void voice_call(void)
 {
-    vqn = 0; vqi = 0; vgap = frame_count;
+    vqn = 0; vqi = 0; vgap_on = 0;
 #ifdef SMP_W_ZERO
     number(score[serving_team]);
     number(score[serving_team ^ 1]);
@@ -119,7 +121,7 @@ void voice_call(void)
 
 void __fastcall__ voice_word(unsigned char w)
 {
-    vqn = 0; vqi = 0; vgap = frame_count;
+    vqn = 0; vqi = 0; vgap_on = 0;
 #ifdef SMP_W_ZERO
     push(VW_SMP[w]);
 #else
@@ -127,13 +129,13 @@ void __fastcall__ voice_word(unsigned char w)
 #endif
 }
 
-unsigned char voice_busy(void) { return (vqi < vqn) || vwas || (signed char)(vgap - frame_count) > 0; }
+unsigned char voice_busy(void) { return (vqi < vqn) || vwas || vgap_on; }
 
 static void voice_update(void)
 {
     if (dmc_busy()) return;
-    if (vwas) { vwas = 0; vgap = frame_count + 6; }  /* a breath between words: vgap is the frame it ends */
-    if ((signed char)(vgap - frame_count) > 0) return;
+    if (vwas) { vwas = 0; vgap = frame_count + 6; vgap_on = 1; }   /* a breath between words, to frame vgap */
+    if (vgap_on) { if ((signed char)(vgap - frame_count) > 0) return; vgap_on = 0; }
     if (vqi >= vqn) return;
     dmc_play(vq[vqi++]);
     vwas = 1;
