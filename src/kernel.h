@@ -40,6 +40,9 @@ unsigned char __fastcall__ pad_poll(unsigned char pad);
 unsigned char rand8(void);
 void __fastcall__ set_rand(unsigned int seed);
 void __fastcall__ dmc_bank(unsigned char bank);   /* maps a sample bank (0-27) at $C000 */
+void __fastcall__ snd_cmd(unsigned char c);       /* queues a Pently request for the NMI (src/sound.c) */
+extern unsigned char snd_on;
+#pragma zpsym("snd_on")
 
 #define APU(r) (*(volatile unsigned char *)(0x4000 + (r)))
 #define NTADR(x, y) (0x2000 + (y) * 32 + (x))

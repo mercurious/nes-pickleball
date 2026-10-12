@@ -1,8 +1,7 @@
 # Dossier: the next cartridge, v0.1.0 (2026-10-11)
 
 What the maintainer found playing v0.0.1, what a review session found behind it, the decisions taken, and the plan.
-Pick up here. Nothing in the ROM has changed yet. The doubles test, `test/doubles.lua`, fails on v0.0.1 by design,
-and the pock tools are in `tools/`. Work resumes when `etk-cloud` is free.
+Pick up here: §8 says where the build-out stands. The sound's design and findings are in `docs/SOUND.md`.
 
 ## 1. The maintainer's verdict on v0.0.1
 
@@ -193,3 +192,19 @@ New music comes after this, before a public release.
   - Another project shares it: deploy to our own directory under `/storage`, use `--appendconfig`, kill RetroArch
     by PID.
 - **car8**: busy with another session.
+
+## 8. Progress (2026-10-12)
+
+| step | state |
+|---|---|
+| 1. doubles | done: the partner returned 85 balls where it returned 0; `test/doubles.lua` is in the default list |
+| 2. listening rig | done: MesenCE records from Lua (`tools/mesen-wave.patch`), `test/record.lua`, `tools/loudness.py`, `test/apulog.lua`; NES Tennis studied register by register. It found v0.0.1's real fault: no effect ever ended (`docs/SOUND.md`) |
+| 3. MMC3 | done: 256 KB PRG, 32 KB CHR, 8 KB PRG-RAM (8 KB of code runs from it); boot, oracle, doubles, soak pass |
+| 4. driver | done: Pently; the jingles ported; `sound.c`, `speech.c`, espeak and `dmc.py` gone |
+| 5. court sounds | built, waiting on ears: CC0 pocks per shot kind with far copies, the bounce, a two-frame synth ring under each hit, net cord, applause; a new encoder (`tools/dpcm.py`) |
+| 6. umpire | built, waiting on ears: Kokoro (Apache-2.0), three voices rendered; `am_michael` in the ROM; `test/voice.lua` measures the call's loudness |
+| 7. paddle | done, waiting on a hand: its own red sprite, drawn where the ball is met and held there 4 frames; the ball's 10-12 px drawing offset fixed; flicker in doubles |
+| 8. finish | in progress: `test/cues.lua` (every channel silent before every serve, the DMC back on its resting level); the DMC-safe controller reading |
+
+The first listening pack is on car12 (`/storage/nes-pickleball/listen1/`, with a README of the questions).
+

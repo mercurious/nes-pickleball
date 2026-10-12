@@ -5,7 +5,8 @@
 .export __STARTUP__ : absolute = 1
 .export _ppu_off, _ppu_on_all, _ppu_wait_nmi
 .export _vram_adr, _vram_put, _vram_write, _vram_fill
-.export _pad_poll, _rand8, _set_rand, _dmc_bank
+.export _pad_poll, _rand8, _set_rand, _dmc_bank, _snd_cmd, _snd_on
+.import pently_update, pently_start_sound, pently_start_music, pently_stop_music
 .export _oam, _vbuf, _pal_buf
 .exportzp _vbuf_len, _pal_dirty, _frame_count, _ppu_ctrl_var, _ppu_mask_var, _scroll_x, _scroll_y, pently_zptemp
 .import _main, zerobss, copydata, popax, popa
@@ -52,8 +53,11 @@ kptr:          .res 2
 kcnt:          .res 2
 rand_lo:       .res 1
 rand_hi:       .res 1
-pad_a:         .res 1
-pad_b:         .res 1
+pad1:          .res 1         ; the controllers as the NMI last read them (bits A B Sel St U D L R)
+pad2:          .res 1
+_snd_on:       .res 1         ; the NMI runs Pently once this is set (after pently_init)
+snd_qh:        .res 1         ; the sound queue: the main thread adds at the tail, the NMI takes from the head
+snd_qt:        .res 1
 pently_zptemp: .res 5         ; Pently's scratch
 
 .segment "OAM"
@@ -64,6 +68,7 @@ _vbuf: .res 256
 
 .segment "BSS"
 _pal_buf: .res 32
+snd_q:    .res 8
 
 .segment "STARTUP"
 reset:
@@ -172,6 +177,17 @@ reset:
 mmc3_init:
     .byte SEL|0, 0, SEL|1, 2, SEL|2, 4, SEL|3, 5, SEL|4, 6, SEL|5, 7, SEL|6, WCODE_BANK, SEL|7, CODE_A_BANK
 
+; void __fastcall__ snd_cmd(unsigned char c): queues a request for Pently, run by the NMI: $00-$3F starts sound
+; effect c, $40-$7F starts song c-$40, $80 stops the music
+_snd_cmd:
+    ldx snd_qt
+    sta snd_q,x
+    inx
+    txa
+    and #7
+    sta snd_qt
+    rts
+
 ; void __fastcall__ dmc_bank(unsigned char bank): maps a sample bank (0-27) at $C000 for the DMC. Only the main
 ; thread switches banks; the NMI never does.
 _dmc_bank:
@@ -188,11 +204,33 @@ nmi:
     pha
     inc _frame_count
     lda nmi_flag
-    beq @done           ; the main loop has not finished a frame: touch nothing
+    bne @draw
+    jmp @done           ; the main loop has not finished a frame: touch nothing
+@draw:
     lda #0
     sta OAM_ADDR
     lda #>_oam
     sta OAM_DMA
+    ; The controllers, read in step with the OAM DMA (the NESdev wiki's "DMC-safe controller reading synced to OAM
+    ; DMA"): after the DMA the cycle parity is known, and every $4016/$4017 read lands on a cycle where the DMC's
+    ; DMA cannot fetch. Otherwise a fetch during the read corrupts both: the controller loses a bit, and the DMC
+    ; gets a byte ANDed with the joypad lines whenever its address ends in $16 or $17, which knocks the level off
+    ; its resting point (found in Mesen, which emulates the 2A03 doing it).
+    ldx #1              ; the strobe takes an odd number of cycles
+    stx pad1
+    stx JOY1
+    dex
+    stx JOY1
+@pads:
+    lda JOY2            ; the loop takes an even number of cycles
+    and #3
+    cmp #1
+    rol pad2,x          ; X = 0: zp,x for the cycle count
+    lda JOY1
+    and #3
+    cmp #1
+    rol pad1
+    bcc @pads
     lda _pal_dirty
     beq @nopal
     bit PPU_STATUS
@@ -245,6 +283,38 @@ nmi:
     lda #0
     sta nmi_flag
 @done:
+    ; the sound, every frame, also when the main loop is late (it often is: the match logic takes more than a
+    ; frame about four frames in ten). Pently's tempo and envelopes count frames, so it runs here; the main
+    ; thread only queues requests (snd_cmd), and only the NMI calls Pently, so it is never reentered.
+    lda _snd_on
+    beq @nosnd
+@sq:
+    ldx snd_qh
+    cpx snd_qt
+    beq @sqdone
+    lda snd_q,x
+    pha
+    inx
+    txa
+    and #7
+    sta snd_qh
+    pla
+    cmp #$80
+    bcs @sstop
+    cmp #$40
+    bcs @smusic
+    jsr pently_start_sound
+    jmp @sq
+@smusic:
+    and #$3F
+    jsr pently_start_music
+    jmp @sq
+@sstop:
+    jsr pently_stop_music
+    jmp @sq
+@sqdone:
+    jsr pently_update
+@nosnd:
     pla
     tay
     pla
@@ -332,30 +402,11 @@ _vram_fill:
 @done:
     rts
 
-; unsigned char __fastcall__ pad_poll(unsigned char pad): bits A B Sel St U D L R from 7 to 0; DMC-safe (read twice)
+; unsigned char __fastcall__ pad_poll(unsigned char pad): bits A B Sel St U D L R from 7 to 0, as the NMI read them
 _pad_poll:
     tax
-    jsr padread
-    sta pad_a
-    jsr padread
-    cmp pad_a
-    beq @ok
-    jsr padread
-@ok:
-    rts
-padread:
-    lda #1
-    sta JOY1
-    lda #0
-    sta JOY1
-    ldy #8
-@r:
-    lda JOY1,x
-    lsr
-    rol pad_b
-    dey
-    bne @r
-    lda pad_b
+    lda pad1,x
+    ldx #0
     rts
 
 ; unsigned char rand8(void): 16-bit LFSR, 8 new bits

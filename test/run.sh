@@ -18,7 +18,7 @@ open("build/tests/ram.lua", "w").write("RAM = {" + ", ".join('["%s"]=%d' % (k, v
                                        + "OUT = %s\n" % json.dumps(os.path.abspath("build/tests")))
 PY
 fail=0
-for name in ${TESTS:-boot oracle doubles voice}; do
+for name in ${TESTS:-boot oracle doubles voice cues}; do
   cat build/tests/ram.lua test/lib.lua "test/$name.lua" > "build/tests/$name.lua"
   timeout ${TIMEOUT:-900} "$MESEN" --testRunner "$ROM" "build/tests/$name.lua" --timeout=${MESEN_TIMEOUT:-800} > "build/tests/$name.log" 2>&1
   rc=$?

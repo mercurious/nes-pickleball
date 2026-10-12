@@ -5,6 +5,8 @@
 extern unsigned char ai_aim_x[4];
 extern unsigned char team_level[2];
 unsigned char dbg[8];   /* the last shot: kind, d, L, T, vmag/8, vz/8, z0 px, tries */
+unsigned char ct_t[4];  /* frames the paddle stays where it met the ball (src/render.c) */
+signed char ct_dx[4], ct_dy[4];   /* where, from the feet: across and up the screen */
 
 static const unsigned char TARGET_X[2][2] = { { 156, 100 }, { 172, 84 } };  /* [team][server on the screen's right] */
 
@@ -158,6 +160,7 @@ void players_update(void)
         if (phuman[s]) human_intent(s, pads[phuman[s] - 1], trigs[phuman[s] - 1]);
         else ai_intent(s);
         if (mom_t[s]) --mom_t[s];
+        if (ct_t[s]) --ct_t[s];
         if (state == ST_CALL || (state == ST_SERVE_DROP && s == server_slot)) {
             in_dx[s] = 0; in_dy[s] = 0;             /* nobody moves before the serve; the server stands still */
         }
@@ -171,6 +174,9 @@ void players_update(void)
             ++sw_t[s];
             if (sw_t[s] >= CW_START && sw_t[s] <= CW_END && in_reach(s)) {
                 v = (bounce_side == 0);
+                ct_dx[s] = (signed char)((int)(bx - px[s]) >> 8);
+                ct_dy[s] = (signed char)(((int)(by - py[s]) >> 8) - (bz >> 8));
+                ct_t[s] = 4;
                 do_hit(s, sw_kind[s]);
                 if (state == ST_DEAD) return;
                 mom_t[s] = v ? 12 : 0;               /* after a volley the momentum rule holds for 12 frames */
