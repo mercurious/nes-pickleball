@@ -4,7 +4,6 @@
 #include "draw.h"
 #include "hud.h"
 #include "sound.h"
-#include "speech.h"
 
 extern const unsigned char court_nt[];
 
@@ -146,7 +145,6 @@ static void match_loop(void)
         draw_match();
         hud_update();
         snd_update();
-        speech_update();
         ppu_wait_nmi();
         if (state == ST_GAMEOVER && state_t >= 250 && !(best_of3 && games[0] < 2 && games[1] < 2)) return;
     }

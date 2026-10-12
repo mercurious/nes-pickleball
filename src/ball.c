@@ -52,7 +52,7 @@ void ball_update(void)
         vz = -(vz - (vz >> 2) - (vz >> 3));
         if (vz < 64) vz = 0;
         vx -= vx >> 3; vy -= vy >> 3;
-        if (vz) sfx(SFX_BOUNCE);
+        if (vz) snd_bounce(by < PX(NET_Y));
         ++bounce_side;
         judge_bounce();
         return;

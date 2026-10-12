@@ -2,8 +2,6 @@
 #include "game.h"
 #include "text.h"
 #include "sound.h"
-#include "speech.h"
-#include "speech_words.h"
 
 #pragma bss-name(push, "ZEROPAGE")
 unsigned int bx, by;
@@ -138,7 +136,7 @@ static void start_serve(void)
     event(EV_SCORE_CALL, server_slot);
     if (mb_call == 0xA5) sidecar = 1;
     mb_call = 1;                                 /* "call the score now"; a sidecar answers with 2 */
-    if (!sidecar) speech_call();                 /* no sidecar: the cartridge calls it */
+    if (!sidecar) voice_call();                  /* no sidecar: the cartridge calls it */
     state = ST_CALL; state_t = 0;
     hud_dirty = 1;
 }
@@ -162,9 +160,13 @@ void end_rally(unsigned char reason, unsigned char loser_team)
     else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { jingle(point_winner == serving_team ? JG_POINT : JG_SIDEOUT); if (rally_len >= 6) applause(70); }
     else jingle(JG_FAULT);
     if (!sidecar) {
-        if (reason == R_LET) speech_word(W_LET);
-        else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) { if (point_winner != serving_team) speech_word(W_SIDEOUT); }
-        else speech_word(W_FAULT);
+        if (reason == R_LET) voice_word(VW_LET);
+        else if (reason == R_PASSED || reason == R_DOUBLE_BOUNCE) {
+            if (point_winner != serving_team) voice_word(doubles && server_num == 1 ? VW_SECOND_SERVER : VW_SIDE_OUT);
+        }
+        else if (reason == R_OUT) voice_word(VW_OUT);
+        else if (reason == R_KITCHEN) voice_word(VW_KITCHEN);
+        else voice_word(VW_FAULT);
     }
 }
 
@@ -180,7 +182,7 @@ static void apply_point(void)
             ++games[w];
             hud_call("GAME");
             jingle(JG_GAME); applause(120);
-            if (!sidecar) speech_word(W_GAME);
+            if (!sidecar) voice_word(VW_GAME);
             event(EV_GAME_OVER, w);
             state = ST_GAMEOVER; state_t = 0; hud_dirty = 1;
             return;
@@ -218,7 +220,7 @@ void match_update(void)
     case ST_CALL:
         ++state_t;
         if (mb_call == 0xA5) { sidecar = 1; mb_call = 1; }
-        if (mb_call == 2 || (!sidecar && state_t >= CALL_FRAMES && !speech_busy()) || state_t >= 240) {
+        if (mb_call == 2 || (!sidecar && state_t >= CALL_FRAMES && !voice_busy()) || state_t >= 240) {
             mb_call = 0;
             state = ST_SERVE_DROP; state_t = 0;
             ball_live = 1; vz = 0;

@@ -1,15 +1,17 @@
-; NES Pickleball kernel (ca65): reset, NMI (OAM DMA, palette, VRAM buffer, scroll), PPU helpers, pads, RNG.
-; The C side (kernel.h) talks to it through __fastcall__ functions and a few zero-page variables.
+; NES Pickleball kernel (ca65): reset, NMI (OAM DMA, palette, VRAM buffer, scroll), PPU helpers, pads, RNG, and
+; the MMC3's banks. The C side (kernel.h) talks to it through __fastcall__ functions and a few zero-page variables.
+; All of it sits in bank 31, the one the MMC3 always maps at $E000.
 
 .export __STARTUP__ : absolute = 1
 .export _ppu_off, _ppu_on_all, _ppu_wait_nmi
 .export _vram_adr, _vram_put, _vram_write, _vram_fill
-.export _pad_poll, _rand8, _set_rand
+.export _pad_poll, _rand8, _set_rand, _dmc_bank
 .export _oam, _vbuf, _pal_buf
-.exportzp _vbuf_len, _pal_dirty, _frame_count, _ppu_ctrl_var, _ppu_mask_var, _scroll_x, _scroll_y
+.exportzp _vbuf_len, _pal_dirty, _frame_count, _ppu_ctrl_var, _ppu_mask_var, _scroll_x, _scroll_y, pently_zptemp
 .import _main, zerobss, copydata, popax, popa
 .importzp sp
 .import __STACK_START__, __STACK_SIZE__
+.import __CODE_W_LOAD__, __CODE_W_RUN__, __CODE_W_SIZE__
 
 PPU_CTRL   = $2000
 PPU_MASK   = $2001
@@ -23,9 +25,18 @@ APU_STATUS = $4015
 JOY1       = $4016
 JOY2       = $4017
 DMC_FREQ   = $4010
+MMC3_SEL   = $8000      ; bits 0-2 the register to set next; bit 6 PRG mode 1 ($C000 switchable)
+MMC3_BANK  = $8001
+MMC3_MIRR  = $A000      ; 0 vertical
+MMC3_WRAM  = $A001      ; $80 PRG-RAM on, writable
+MMC3_IRQOFF = $E000
+SEL        = $40        ; PRG mode 1, CHR A12 not inverted
+CODE_A_BANK = 29        ; R7, kept at $A000
+WCODE_BANK  = 28        ; the image of the PRG-RAM code
 
 .segment "HEADER"
-    .byte "NES", $1A, 2, 1, $01, $00, 0, 0, 0, 0, 0, 0, 0, 0   ; 32 KB PRG, 8 KB CHR, mapper 0, vertical mirroring
+    ; NES 2.0: 256 KB PRG, 32 KB CHR, mapper 4 (MMC3), 8 KB PRG-RAM (64 << 7) without a battery, NTSC
+    .byte "NES", $1A, 16, 4, $40, $08, 0, 0, $07, 0, 0, 0, 0, 0
 
 .segment "ZEROPAGE"
 _frame_count:  .res 1
@@ -43,6 +54,7 @@ rand_lo:       .res 1
 rand_hi:       .res 1
 pad_a:         .res 1
 pad_b:         .res 1
+pently_zptemp: .res 5         ; Pently's scratch
 
 .segment "OAM"
 _oam: .res 256
@@ -57,6 +69,21 @@ _pal_buf: .res 32
 reset:
     sei
     cld
+    ldx #0              ; the MMC3 first, from here in bank 31: CHR 2 KB 0 and 2 at $0000, 1 KB 4-7 at $1000
+@mmc3:
+    lda mmc3_init,x
+    sta MMC3_SEL
+    lda mmc3_init+1,x
+    sta MMC3_BANK
+    inx
+    inx
+    cpx #16
+    bne @mmc3
+    lda #0
+    sta MMC3_MIRR
+    lda #$80
+    sta MMC3_WRAM
+    sta MMC3_IRQOFF
     ldx #$40
     stx JOY2            ; frame IRQ off
     ldx #$FF
@@ -99,6 +126,29 @@ reset:
     sta sp+1
     jsr zerobss
     jsr copydata
+    lda #<__CODE_W_LOAD__ ; the PRG-RAM code: bank 28 is mapped at $C000 for the copy, then sample bank 0
+    sta kptr
+    lda #>__CODE_W_LOAD__
+    sta kptr+1
+    lda #<__CODE_W_RUN__
+    sta kcnt
+    lda #>__CODE_W_RUN__
+    sta kcnt+1
+    ldy #0
+    ldx #>(__CODE_W_SIZE__ + 255)
+    beq @wdone
+@wcopy:
+    lda (kptr),y
+    sta (kcnt),y
+    iny
+    bne @wcopy
+    inc kptr+1
+    inc kcnt+1
+    dex
+    bne @wcopy
+@wdone:
+    lda #0
+    jsr _dmc_bank
     lda #$0F
     sta APU_STATUS      ; pulse 1, pulse 2, triangle, noise on; DMC off
     lda #$A0            ; NMI on, 8x16 sprites, BG table 0, nametable 0
@@ -117,7 +167,19 @@ reset:
 @halt:
     jmp @halt
 
-.segment "CODE"
+.segment "KERNEL"
+; the MMC3's register pairs at reset: CHR R0-R5, R6 the WRAM code image (for the copy), R7 the $A000 code bank
+mmc3_init:
+    .byte SEL|0, 0, SEL|1, 2, SEL|2, 4, SEL|3, 5, SEL|4, 6, SEL|5, 7, SEL|6, WCODE_BANK, SEL|7, CODE_A_BANK
+
+; void __fastcall__ dmc_bank(unsigned char bank): maps a sample bank (0-27) at $C000 for the DMC. Only the main
+; thread switches banks; the NMI never does.
+_dmc_bank:
+    ldx #SEL|6
+    stx MMC3_SEL
+    sta MMC3_BANK
+    rts
+
 nmi:
     pha
     txa

@@ -1,0 +1,44 @@
+# The DPCM samples (tools/dpcm.py encodes them into audio/dpcm/; `make samples`). One a line:
+#   name  source.wav (in audio/)  start-ms  length-ms  rate-index  gain-dB  [far] [flip]
+#   name  @other  rate-index          (the same data as another sample, played at another rate)
+# The pocks are single hits cut from CC0 field recordings by tools/findpocks.py (audio/samples/CREDITS.md); the
+# choice of hit per shot is provisional until the maintainer picks by ear (the shortlist in DOSSIER_v0.1.0 §4).
+# Rate 15 is 33,144 Hz. "far" adds a copy 7 dB down for shots on the far court.
+
+pock_drive   samples/fkunze_022.51.wav   0  80  15   0  far
+pock_serve   samples/fkunze_105.58.wav   0  80  15  -2  far
+pock_volley  samples/fkunze_099.04.wav   0  70  15   0  far
+pock_smash   samples/fkunze_106.97.wav   0  80  15   2  far
+pock_dink    samples/oldome_067.14.wav   0  70  15  -4  far
+bounce       @pock_dink_far  13
+
+# The umpire: Kokoro (Apache-2.0), voice am_michael, rendered by tools/umpire_tts.py and trimmed by
+# tools/voiceprep.py. Each word is encoded at the same loudness (rms=11). W_ZERO..W_TWENTY must stay in order.
+w_zero             voice/am_michael/w_zero.wav  0   594  15  0  rms=11 lp=5000
+w_one              voice/am_michael/w_one.wav  0   490  15  0  rms=11 lp=5000
+w_two              voice/am_michael/w_two.wav  0   428  15  0  rms=11 lp=5000
+w_three            voice/am_michael/w_three.wav  0   555  15  0  rms=11 lp=5000
+w_four             voice/am_michael/w_four.wav  0   515  15  0  rms=11 lp=5000
+w_five             voice/am_michael/w_five.wav  0   552  15  0  rms=11 lp=5000
+w_six              voice/am_michael/w_six.wav  0   522  15  0  rms=11 lp=5000
+w_seven            voice/am_michael/w_seven.wav  0   616  15  0  rms=11 lp=5000
+w_eight            voice/am_michael/w_eight.wav  0   454  15  0  rms=11 lp=5000
+w_nine             voice/am_michael/w_nine.wav  0   540  15  0  rms=11 lp=5000
+w_ten              voice/am_michael/w_ten.wav  0   502  15  0  rms=11 lp=5000
+w_eleven           voice/am_michael/w_eleven.wav  0   616  15  0  rms=11 lp=5000
+w_twelve           voice/am_michael/w_twelve.wav  0   570  15  0  rms=11 lp=5000
+w_thirteen         voice/am_michael/w_thirteen.wav  0   789  15  0  rms=11 lp=5000
+w_fourteen         voice/am_michael/w_fourteen.wav  0   770  15  0  rms=11 lp=5000
+w_fifteen          voice/am_michael/w_fifteen.wav  0   751  15  0  rms=11 lp=5000
+w_sixteen          voice/am_michael/w_sixteen.wav  0   794  15  0  rms=11 lp=5000
+w_seventeen        voice/am_michael/w_seventeen.wav  0   862  15  0  rms=11 lp=5000
+w_eighteen         voice/am_michael/w_eighteen.wav  0   678  15  0  rms=11 lp=5000
+w_nineteen         voice/am_michael/w_nineteen.wav  0   737  15  0  rms=11 lp=5000
+w_twenty           voice/am_michael/w_twenty.wav  0   644  15  0  rms=11 lp=5000
+w_fault            voice/am_michael/w_fault.wav  0   608  15  0  rms=11 lp=5000
+w_out              voice/am_michael/w_out.wav  0   499  15  0  rms=11 lp=5000
+w_let              voice/am_michael/w_let.wav  0   515  15  0  rms=11 lp=5000
+w_kitchen          voice/am_michael/w_kitchen.wav  0   583  15  0  rms=11 lp=5000
+w_side_out         voice/am_michael/w_side_out.wav  0   740  15  0  rms=11 lp=5000
+w_second_server    voice/am_michael/w_second_server.wav  0   986  15  0  rms=11 lp=5000
+w_game             voice/am_michael/w_game.wav  0   569  15  0  rms=11 lp=5000

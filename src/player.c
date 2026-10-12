@@ -94,7 +94,7 @@ void __fastcall__ do_hit(unsigned char s, unsigned char kind)
     bounce_side = 0;
     last_hitter = s;
     ++shots; ++rally_len;
-    sfx(kind == SHOT_HARD ? SFX_HIT_HARD : SFX_HIT_SOFT);
+    snd_hit(s, ev);
     if (shots == 2) event(EV_RETURN, s);
     else if (shots == 3) event(EV_THIRD_SHOT, s);
     else event(ev, s);
@@ -122,7 +122,7 @@ void __fastcall__ serve_hit(unsigned char s)
     shots = 1; rally_len = 1;
     state = ST_FLIGHT; state_t = 0;
     pstate[s] = 2; anim_t[s] = 0;
-    sfx(SFX_SERVE);
+    snd_hit(s, EV_SERVE);
     event(EV_SERVE, s);
 }
 
