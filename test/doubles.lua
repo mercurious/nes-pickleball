@@ -1,6 +1,6 @@
 -- 1 PLAYER DOUBLES with the human idle for one game: the computer partner (slot 1) must return the serves that
 -- come to it. Fails on v0.0.1: team A's "who takes it" only ran from slot 0, which is the human, so the partner
--- never owned a ball (0 returns over 11 serves on 2026-10-11). Not in run.sh's default list until the fix lands.
+-- never owned a ball (0 returns over 11 serves on 2026-10-11). Fixed in src/ai.c: 85 returns over the same game.
 T.run(function()
   T.step(60)
   T.tap("right", 3)                         -- the mode line: 1 PLAYER DOUBLES

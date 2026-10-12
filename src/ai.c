@@ -144,7 +144,8 @@ void __fastcall__ ai_intent(unsigned char s)
     coming = ball_live && last_hitter != 0xFF && TEAM(last_hitter) != team;
     if (shots != seen_hit[s]) {                     /* somebody hit: a new decision */
         seen_hit[s] = shots;
-        if (coming) { if ((s & 1) == 0 || !pactive[s & 2]) team_decide(team); ai_t[s] = LV_REACT[t]; }
+        /* the team's first computer player decides: slot 1 when slot 0 is the human (1 PLAYER DOUBLES) */
+        if (coming) { if ((s & 1) == 0 || !pactive[s & 2] || phuman[s & 2]) team_decide(team); ai_t[s] = LV_REACT[t]; }
     }
     line_y = IS_NEAR(s) ? NEAR_KIT + 3 : FAR_KIT - 3;
     base_y = IS_NEAR(s) ? NEAR_Y + 2 : FAR_Y - 2;

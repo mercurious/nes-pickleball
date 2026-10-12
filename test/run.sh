@@ -12,10 +12,12 @@ import json
 s = json.load(open("build/ramsyms.json"))
 import os
 pb = ", ".join("%s=%s" % (k[3:], v) for k, v in os.environ.items() if k.startswith("PB_") and v.isdigit())
-open("build/tests/ram.lua", "w").write("RAM = {" + ", ".join('["%s"]=%d' % (k, v["addr"]) for k, v in s.items()) + "}\nPB = {" + pb + "}\n")
+rec = os.environ.get("REC", "")
+open("build/tests/ram.lua", "w").write("RAM = {" + ", ".join('["%s"]=%d' % (k, v["addr"]) for k, v in s.items()) + "}\nPB = {" + pb + "}\n"
+                                       + ("REC = %s\n" % json.dumps(os.path.abspath(rec)) if rec else ""))
 PY
 fail=0
-for name in ${TESTS:-boot oracle}; do
+for name in ${TESTS:-boot oracle doubles}; do
   cat build/tests/ram.lua test/lib.lua "test/$name.lua" > "build/tests/$name.lua"
   timeout ${TIMEOUT:-900} "$MESEN" --testRunner "$ROM" "build/tests/$name.lua" --timeout=${MESEN_TIMEOUT:-800} > "build/tests/$name.log" 2>&1
   rc=$?
