@@ -204,7 +204,7 @@ New music comes after this, before a public release.
 | 5. court sounds | built, waiting on ears: CC0 pocks per shot kind with far copies, the bounce, a two-frame synth ring under each hit, net cord, applause; a new encoder (`tools/dpcm.py`) |
 | 6. umpire | built, waiting on ears: Kokoro (Apache-2.0), three voices rendered; `am_michael` in the ROM; `test/voice.lua` measures the call's loudness |
 | 7. paddle | done, waiting on a hand: its own red sprite, drawn where the ball is met and held there 4 frames; the ball's 10-12 px drawing offset fixed; flicker in doubles |
-| 8. finish | in progress: `test/cues.lua` (every channel silent before every serve, the DMC back on its resting level); the DMC-safe controller reading |
+| 8. finish | done but the ears: `test/cues.lua` (every channel silent before every serve, the DMC on its resting level, every hit's pock), the DMC-safe controller reading, Pently in the NMI, the long soak; `docs/Findings_20261012.md`. v0.1.0 is tagged after the maintainer's verdicts |
 
-The first listening pack is on car12 (`/storage/nes-pickleball/listen1/`, with a README of the questions).
+The listening packs are on car12 (`/storage/nes-pickleball/listen1/` and `listen2/`, each with a README of the questions).
 
