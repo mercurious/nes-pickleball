@@ -45,8 +45,9 @@ static unsigned char frame_of(unsigned char s)
 
 void draw_match(void)
 {
-    unsigned char i, j, t, s, attr, x, y;
+    unsigned char i, j, t, s, attr, x, y, flip;
     draw_begin();
+    flip = doubles && (frame_count & 1);           /* read once: an NMI during the loop must not change the order */
     x = bx >> 8; y = by >> 8;
     /* the ball's and the shadow's art sit at the bottom of their 8x16 sprites (tools/chr.py pads at the top), so
        their tops are 13 and 14 px up; v0.0.1 drew them 10-12 px below where the ball was */
@@ -61,7 +62,7 @@ void draw_match(void)
     for (i = 0; i < 4; ++i) {
         /* doubles: the order flips every other frame, so if a line holds more than 8 sprites they flicker
            instead of one always vanishing */
-        s = (doubles && (frame_count & 1)) ? order[3 - i] : order[i];
+        s = flip ? order[3 - i] : order[i];
         if (!pactive[s]) continue;
         attr = shirt[s];
         if (sw_t[s] && sw_side[s]) attr |= ATTR_HFLIP;
