@@ -19,7 +19,8 @@ against the unchanged cartridge in a desktop RetroArch with stand-ins for the mo
 `pickleball-coop` carries the two game entries. On a 12 GB Flip 2 with the real servers it called an exhibition
 (serves released 0.6-2.3 s into the cartridge's 4 s gate) and played doubles with Gemma 4 E4B making the partner's
 calls (6-8 s each) and Qwen3-ASR hearing the orders; the recordings are on the handheld for the maintainer's ears.
-The verdict, a game with a person at the microphone, the Ports install and the v0.0.2 release wait:
+The maintainer approved the voices by ear (2026-10-24) and v0.0.2 is released: the add-on tarball that autogamer
+bundles. A game with a person at the microphone and autogamer's own release wait:
 [docs/Findings_20261024.md](docs/Findings_20261024.md).
 
 | document | what it is |
