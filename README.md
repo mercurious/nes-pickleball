@@ -6,11 +6,13 @@ the 1985 launch window, in the mould of *Tennis* (Famicom 1984, NES 1985). The s
 Pacific Northwest had heard of it. The cartridge plays the rules of that era: side-out scoring to 11, the
 two-bounce rule, the 7-foot non-volley zone, underhand serves, one serve, let serves replayed.
 
-**Status (2026-10-12): v0.1.0 is being built** (v0.0.1 was released 2026-10-11). `make` produces
-`build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles fix, a new
-sound (Pently, real pocks from CC0 recordings, a Kokoro umpire) and a visible paddle. It plays in any NES
-emulator and is tested headless in MesenCE's test runner. The new sound waits on the maintainer's ears. The plan
-and its progress are in [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md), the sound in [docs/SOUND.md](docs/SOUND.md).
+**Status (2026-10-24): v0.0.1 re-released from main.** The first v0.0.1 (2026-10-11, an NROM ROM) had been
+downloaded by nobody, so the rebuilt cartridge keeps its number; v0.0.2 stays reserved for the add-on. `make`
+produces `build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles fix, a
+new sound (Pently, real pocks from CC0 recordings, a Kokoro umpire), a visible paddle, and every player in a shirt
+of their own, drawn at random each match. It plays in any NES emulator and is tested headless in MesenCE's test
+runner. The new sound still waits on the maintainer's ears. The plan that built it and its progress are in
+[docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its name), the sound in [docs/SOUND.md](docs/SOUND.md).
 The add-on (v0.0.2) is not started.
 
 | document | what it is |
@@ -32,7 +34,7 @@ The add-on (v0.0.2) is not started.
 
 | version | what | runs on |
 |---|---|---|
-| **v0.0.1 the cartridge** | the ROM: NROM-256 (32 KB PRG + 8 KB CHR), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
+| **v0.0.1 the cartridge** | the ROM: MMC3 (256 KB PRG + 32 KB CHR, 8 KB PRG-RAM), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch, every player in a shirt of their own. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
 | **v0.0.2 the teammate add-on** | the sidecar: autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "switch"), makes its own calls between points (a language model), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch". No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as an [autogamer](https://github.com/mercurious/autogamer) entry, the first one that needs no dump from the player |
 
 The add-on is built only after the cartridge is validated; the cartridge is built so that the add-on needs
