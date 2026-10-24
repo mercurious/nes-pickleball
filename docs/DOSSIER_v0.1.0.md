@@ -201,10 +201,10 @@ New music comes after this, before a public release.
 | 2. listening rig | done: MesenCE records from Lua (`tools/mesen-wave.patch`), `test/record.lua`, `tools/loudness.py`, `test/apulog.lua`; NES Tennis studied register by register. It found v0.0.1's real fault: no effect ever ended (`docs/SOUND.md`) |
 | 3. MMC3 | done: 256 KB PRG, 32 KB CHR, 8 KB PRG-RAM (8 KB of code runs from it); boot, oracle, doubles, soak pass |
 | 4. driver | done: Pently; the jingles ported; `sound.c`, `speech.c`, espeak and `dmc.py` gone |
-| 5. court sounds | built, waiting on ears: CC0 pocks per shot kind with far copies, the bounce, a two-frame synth ring under each hit, net cord, applause; a new encoder (`tools/dpcm.py`) |
-| 6. umpire | built, waiting on ears: Kokoro (Apache-2.0), three voices rendered; `am_michael` in the ROM; `test/voice.lua` measures the call's loudness |
-| 7. paddle | done, waiting on a hand: its own red sprite, drawn where the ball is met and held there 4 frames; the ball's 10-12 px drawing offset fixed; flicker in doubles |
-| 8. finish | done but the ears: `test/cues.lua` (every channel silent before every serve, the DMC on its resting level, every hit's pock), the DMC-safe controller reading, Pently in the NMI, the long soak; `docs/Findings_20261012.md`. v0.1.0 is tagged after the maintainer's verdicts |
+| 5. court sounds | done, approved by ear 2026-10-24: CC0 pocks per shot kind with far copies, the bounce, a two-frame synth ring under each hit, net cord, applause; a new encoder (`tools/dpcm.py`) |
+| 6. umpire | done, approved by ear 2026-10-24: Kokoro (Apache-2.0), three voices rendered; `am_michael` in the ROM; `test/voice.lua` measures the call's loudness |
+| 7. paddle | done: its own sprite, drawn where the ball is met and held there 4 frames, in its player's palette since the shirts; the ball's 10-12 px drawing offset fixed; flicker in doubles |
+| 8. finish | done but the ears: `test/cues.lua` (every channel silent before every serve, the DMC on its resting level, every hit's pock), the DMC-safe controller reading, Pently in the NMI, the long soak; `docs/Findings_20261012.md`. Shipped 2026-10-24 as the v0.0.1 re-release (no v0.1.0 tag: the first v0.0.1 had no downloads and v0.0.2 is the add-on's), after the maintainer's verdict on the sound |
 
 The listening packs are on car12 (`/storage/nes-pickleball/listen1/` and `listen2/`, each with a README of the questions).
 

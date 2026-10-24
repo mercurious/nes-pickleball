@@ -71,7 +71,8 @@ built on etk-cloud.
 5. **The ball was drawn 10-12 px below where it was** (and its shadow): its art sits at the bottom of the 8x16
    sprite and `render.c` placed it as if at the top. Fixed with the paddle (plan step 7).
 
-## Waiting on the maintainer's ears (car12, `/storage/nes-pickleball/listen1/`)
+## The verdict (2026-10-24)
 
-Does the v0.0.1 recording match what was heard; layered, sample or synth hits; which pocks; which voice
-(`am_michael`, `af_heart`, `bm_george`).
+The maintainer heard the sound as built (the layered hits, these pocks, `am_michael` in the chair) and approved
+it: "the sound is good". It went out as shipped in the v0.0.1 re-release. The listening packs on car12
+(`/storage/nes-pickleball/listen1/`, `listen2/`) remain for comparing any later change against.

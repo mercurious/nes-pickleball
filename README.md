@@ -11,7 +11,7 @@ downloaded by nobody, so the rebuilt cartridge keeps its number; v0.0.2 stays re
 produces `build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles fix, a
 new sound (Pently, real pocks from CC0 recordings, a Kokoro umpire), a visible paddle, and every player in a shirt
 of their own, drawn at random each match. It plays in any NES emulator and is tested headless in MesenCE's test
-runner. The new sound still waits on the maintainer's ears. The plan that built it and its progress are in
+runner. The maintainer approved the new sound as shipped (2026-10-24). The plan that built it and its progress are in
 [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its name), the sound in [docs/SOUND.md](docs/SOUND.md).
 The add-on (v0.0.2) is not started.
 
