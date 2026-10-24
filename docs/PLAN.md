@@ -1,8 +1,9 @@
 # The build plan (2026-10-10, revised the same evening)
 
-**Status 2026-10-11:** Release 1 (v0.0.1, the cartridge) is built; the phases' gates and what each one taught are in
-`Findings_20261011.md`. Release 2 (the teammate add-on) has not started. The next cartridge, v0.1.0, is planned in
-`DOSSIER_v0.1.0.md`.
+**Status 2026-10-24:** Release 1 (v0.0.1, the cartridge) is built and was re-released from main on 2026-10-24 with
+the build-out of `DOSSIER_v0.1.0.md` (`Findings_20261011.md`, `Findings_20261012.md`). Release 2 (v0.0.2, the
+teammate add-on) is built and passes its harness on the laptop; the handheld gates of Phases 8-10 wait on the
+maintainer (`Findings_20261024.md`).
 
 Two releases. **v0.0.1 is the cartridge**: a ROM that plays on every NES emulator, on a flash cart and on the
 Flip 2 as a plain NES game, built in one autonomous session. **v0.0.2 is the teammate add-on**: on ROCKNIX with

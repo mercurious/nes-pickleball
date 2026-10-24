@@ -6,14 +6,18 @@ the 1985 launch window, in the mould of *Tennis* (Famicom 1984, NES 1985). The s
 Pacific Northwest had heard of it. The cartridge plays the rules of that era: side-out scoring to 11, the
 two-bounce rule, the 7-foot non-volley zone, underhand serves, one serve, let serves replayed.
 
-**Status (2026-10-24): v0.0.1 re-released from main.** The first v0.0.1 (2026-10-11, an NROM ROM) had been
-downloaded by nobody, so the rebuilt cartridge keeps its number; v0.0.2 stays reserved for the add-on. `make`
-produces `build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles fix, a
-new sound (Pently, real pocks from CC0 recordings, a Kokoro umpire), a visible paddle, and every player in a shirt
-of their own, drawn at random each match. It plays in any NES emulator and is tested headless in MesenCE's test
-runner. The maintainer approved the new sound as shipped (2026-10-24). The plan that built it and its progress are in
-[docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its name), the sound in [docs/SOUND.md](docs/SOUND.md).
-The add-on (v0.0.2) is not started.
+**Status (2026-10-24): v0.0.1 re-released from main; v0.0.2, the add-on, built and waiting for a handheld.** The
+first v0.0.1 (2026-10-11, an NROM ROM) had been downloaded by nobody, so the rebuilt cartridge keeps its number.
+`make` produces `build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles
+fix, a new sound (Pently, real pocks from CC0 recordings, a Kokoro umpire), a visible paddle, and every player in a
+shirt of their own, drawn at random each match. It plays in any NES emulator and is tested headless in MesenCE's
+test runner. The maintainer approved the new sound as shipped (2026-10-24). The plan that built it and its progress
+are in [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its name), the sound in
+[docs/SOUND.md](docs/SOUND.md). The add-on's sidecar (`sidecar/pickleball_coop.py`) runs the whole v0.0.2 protocol
+against the unchanged cartridge in a desktop RetroArch with stand-ins for the model servers
+(`test/sidecar_test.sh`, 33 checks); `tools/addon.sh` packs what autogamer bundles, and autogamer's branch
+`pickleball-coop` carries the two game entries. The handheld gates (the real voices, a person with a microphone, the
+Ports install) and the v0.0.2 release wait on the maintainer: [docs/Findings_20261024.md](docs/Findings_20261024.md).
 
 | document | what it is |
 |---|---|
@@ -28,6 +32,8 @@ The add-on (v0.0.2) is not started.
 | [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) | the next cartridge: the maintainer's verdict on v0.0.1, the doubles bug, why the sound failed, the CC0 pock, MMC3, the plan and its progress |
 | [docs/Findings_20261012.md](docs/Findings_20261012.md) | the v0.1.0 build-out: what was found (v0.0.1's stuck effects, the main loop's pace, the 2A03's DMC corruption, the ball drawn too low), the gates, the soak |
 | [docs/SOUND.md](docs/SOUND.md) | the sound of v0.1.0: Pently, the DPCM encoder, the umpire, the rules the driver keeps, the tests, what NES Tennis does |
+| [docs/V002_BRIEF.md](docs/V002_BRIEF.md) | the add-on's brief: what exists, what to build, the gotchas; its status |
+| [docs/Findings_20261024.md](docs/Findings_20261024.md) | the v0.0.2 build: the sidecar, what was found (the title's stale mailbox, the one-frame point), the gates on the laptop, what waits on the handheld |
 | [audio/CREDITS.md](audio/CREDITS.md) | the CC0 recordings, the Kokoro voice, Pently |
 
 ## Two releases
@@ -35,7 +41,7 @@ The add-on (v0.0.2) is not started.
 | version | what | runs on |
 |---|---|---|
 | **v0.0.1 the cartridge** | the ROM: MMC3 (256 KB PRG + 32 KB CHR, 8 KB PRG-RAM), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch, every player in a shirt of their own. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
-| **v0.0.2 the teammate add-on** | the sidecar: autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "switch"), makes its own calls between points (a language model), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch". No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as an [autogamer](https://github.com/mercurious/autogamer) entry, the first one that needs no dump from the player |
+| **v0.0.2 the teammate add-on** | the sidecar (`sidecar/pickleball_coop.py`): autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "sorry"), makes its own calls between points (Gemma 4 through llamatalk's `llama-server`, with a record of what each call did in each situation), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch", "be patient", "your call". An exhibition mode gives all four players and the umpire a voice. No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as two [autogamer](https://github.com/mercurious/autogamer) entries (`pickleball-coop`, `pickleball-watch`) on a bundled ROM, the first that need no dump from the player |
 
 The add-on is built only after the cartridge is validated; the cartridge is built so that the add-on needs
 nothing from it but the frozen mailbox and RAM map.
@@ -53,7 +59,11 @@ make samples              # re-encodes the DPCM samples (audio/samples.txt -> au
 test/ra_restart.sh        # the ROM in the desktop RetroArch with network commands on (test/ra.cfg)
 python3 test/ra_play.py 60 --level 3     # a reflex player over RetroArch, logging every event
 python3 sidecar/stub.py 60               # the sidecar stub: score calls through the serve gate, lines, bubbles
+python3 sidecar/fakeservers.py &         # stand-ins for tts-server, llama-server and Qwen3-ASR (no models)
+python3 sidecar/pickleball_coop.py 120 --mode watch   # the add-on against the desktop RetroArch (PB_AUDIO=0: no sound)
+test/sidecar_test.sh      # the add-on's harness: watch, a game's end and restart, coop with a stand-in and R1 (33 checks)
 test/run.sh               # the Lua tests in MesenCE's test runner, headless (boot, oracle, doubles, voice, cues)
+tools/addon.sh            # packs the add-on autogamer bundles: build/addon/pickleball-addon-<VERSION>.tar.gz
 ```
 
 ```
@@ -64,7 +74,9 @@ art/        sprites as text (0-3 per pixel), the box art; tools/ make the CHR
 tools/      Python 3: court.py, chr.py, dpcm.py (the DPCM encoder), crowd.py, umpire_tts.py, voiceprep.py,
             findpocks.py, loudness.py, check_rom.py, ramsyms.py; mesen-wave.patch (MesenCE records from Lua)
 test/       Lua tests (lib, boot, oracle, doubles, voice, cues, soak, record, apulog, shots) and the RetroArch harness
-sidecar/    ra.py, pad.py (RetroArch's UDP interfaces) and stub.py, the base of the v0.0.2 teammate
+sidecar/    the v0.0.2 teammate: pickleball_coop.py (the sidecar), voices.py (the voices, the phrase cache, the speaker),
+            cache.py (renders the cache with Pocket TTS), fakeservers.py (test stand-ins), ra.py, pad.py (RetroArch's
+            UDP interfaces), stub.py (the printed-voice stub the sidecar grew from)
 docs/       plan, design, research, manual, the mailbox contract, the generated RAM map, findings
 build/      pickleball.nes and everything generated (not committed)
 ```

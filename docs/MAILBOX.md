@@ -8,7 +8,7 @@ The full RAM map with every other variable is generated into `docs/RAM_MAP.md` b
 
 | address | name | who writes | meaning |
 |---|---|---|---|
-| $07F0 | MB_MAGIC | ROM | $5B while a match is running (0 on the title and menu) |
+| $07F0 | MB_MAGIC | ROM | $5B while a match is running (0 on the title and menu at power-on; **the v0.0.1 cartridge does not clear it when a game or the demo returns to the title**, so the title then shows the last match's mailbox, stale. A sidecar tells the title by the ROM's idle counter, `idle` at $04C7-$04C8, which moves every frame there and nowhere else; `sidecar/pickleball_coop.py` does. The next cartridge clears it) |
 | $07F1 | MB_VERSION | ROM | 1 |
 | $07F2 | MB_STATE | ROM | 0 PRESERVE, 1 CALL (waiting for the score call), 2 SERVE_DROP (the ball drops from the server's hand), 3 FLIGHT (the serve in the air), 4 RALLY, 5 DEAD (the umpire's call shows), 6 GAMEOVER |
 | $07F3 | MB_SCORE_A | ROM | team A's points (team A is the near court: slots 0 and 1) |
@@ -24,6 +24,11 @@ The full RAM map with every other variable is generated into `docs/RAM_MAP.md` b
 | $07FD | MB_BUBBLE | sidecar | a phrase code: the ROM shows it as a speech bubble beside the player in MB_BUBBLE_SLOT for 45 frames, then clears it and this byte. 1 MINE! 2 YOURS! 3 SWITCH! 4 GOT IT 5 BOUNCE IT 6 NICE! 7 SORRY 8 OUT! 9 GO! 10 BACK! 11 UP! 12 MIDDLE! 13 STAY! 14 NO! 15 GOOD 16 HELP! |
 | $07FE | MB_BUBBLE_SLOT | sidecar | the slot 0-3 (written together with MB_BUBBLE, in one write of two bytes) |
 | $07FF | MB_RESERVED | tests | the rally-result hook: 1 or 2 ends the live rally at once with team A or B losing (a "passed ball"), for the rules oracle. A sidecar never writes it. |
+
+A point's end is one frame: `POINT_WON` (or `SIDE_OUT` / `SECOND_SERVER`) and then `SCORE_CALL` are raised in the
+same frame, so a sidecar polling `MB_EVENT_N` sees `SCORE_CALL` with `MB_EVENT_N` two ahead. Read the point from
+the mailbox then: the score changed, so the serving team scored; the serving team changed, a side out; the server
+number changed, the second server. The faults come 75 frames earlier, on their own.
 
 ## Events (MB_EVENT)
 
