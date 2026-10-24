@@ -16,8 +16,11 @@ are in [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its n
 [docs/SOUND.md](docs/SOUND.md). The add-on's sidecar (`sidecar/pickleball_coop.py`) runs the whole v0.0.2 protocol
 against the unchanged cartridge in a desktop RetroArch with stand-ins for the model servers
 (`test/sidecar_test.sh`, 33 checks); `tools/addon.sh` packs what autogamer bundles, and autogamer's branch
-`pickleball-coop` carries the two game entries. The handheld gates (the real voices, a person with a microphone, the
-Ports install) and the v0.0.2 release wait on the maintainer: [docs/Findings_20261024.md](docs/Findings_20261024.md).
+`pickleball-coop` carries the two game entries. On a 12 GB Flip 2 with the real servers it called an exhibition
+(serves released 0.6-2.3 s into the cartridge's 4 s gate) and played doubles with Gemma 4 E4B making the partner's
+calls (6-8 s each) and Qwen3-ASR hearing the orders; the recordings are on the handheld for the maintainer's ears.
+The verdict, a game with a person at the microphone, the Ports install and the v0.0.2 release wait:
+[docs/Findings_20261024.md](docs/Findings_20261024.md).
 
 | document | what it is |
 |---|---|

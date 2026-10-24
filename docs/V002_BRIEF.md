@@ -1,10 +1,12 @@
 # v0.0.2 brief: the teammate add-on
 
-**Status 2026-10-24: built on the laptop, waiting for a handheld** (`Findings_20261024.md`). Of the six items
+**Status 2026-10-24: built, run on car12 with the real servers, waiting for the maintainer's verdict**
+(`Findings_20261024.md`). Of the six items
 below: 1-5 are in `sidecar/pickleball_coop.py`, `voices.py` and `cache.py` and pass `test/sidecar_test.sh` against
 the cartridge in the desktop RetroArch with stand-ins for the servers (`fakeservers.py`); 6 is autogamer's branch
 `pickleball-coop` plus `tools/addon.sh` here. The cache is `cache.py` (Python writes the WAVs), not `cache.sh`.
-Not done: anything that needs the device, the models or a person: the gates of Phases 8-10.
+Not done: the ears (the WAVs are in car12's `/storage/nes-pickleball/listen3/`), a person at the microphone, a
+release build and the Ports install, the v0.0.2 release.
 
 What the session built on top of the frozen v0.0.1 cartridge, in this repo's `sidecar/` and then as an
 autogamer game entry. Nothing here changes the ROM; everything programs against `docs/MAILBOX.md` and

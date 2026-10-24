@@ -6,7 +6,7 @@
 # The cache: DIR/<voice>/<key>.wav, 24 kHz s16 mono. Usage as a tool: cache.py (next to this file).
 # Env: PB_TTS (default http://127.0.0.1:8093), PB_AUDIO=0 (no pacat: a line "plays" as a sleep of its length),
 #   PB_DUCK=0 (never touch RetroArch's volume), XDG_RUNTIME_DIR (pacat's PulseAudio/PipeWire).
-import json, os, queue, shutil, subprocess, threading, time, urllib.request, wave
+import array, json, os, queue, shutil, subprocess, threading, time, urllib.request, wave
 TTS = os.environ.get("PB_TTS", "http://127.0.0.1:8093")
 RATE = 24000
 ENV = dict(os.environ, XDG_RUNTIME_DIR=os.environ.get("XDG_RUNTIME_DIR", "/run/0-runtime-dir"))
@@ -70,6 +70,17 @@ def read_wav(path):
         with wave.open(path, "rb") as w: return w.readframes(w.getnframes())
     except (OSError, wave.Error): return b""
 
+def trim(pcm, floor=120, keep_ms=60):
+    """the phrase without Pocket TTS's silence before and after it (a digit is 0.8 s rendered, 0.4 s said)"""
+    a = array.array("h", pcm[:len(pcm) // 2 * 2]); n = len(a)
+    if not n: return pcm
+    i = 0
+    while i < n and abs(a[i]) < floor: i += 1
+    j = n
+    while j > i and abs(a[j - 1]) < floor: j -= 1
+    k = RATE * keep_ms // 1000
+    return a[max(0, i - k):min(n, j + k)].tobytes()
+
 def ensure(cache_dir, voices, keys=None, log=print, stop=None):
     """render what the cache misses: every PHRASES key (or keys) for every voice. Returns (rendered, failed)."""
     keys = list(keys or PHRASES); done = failed = 0; todo = [(v, k) for v in dict.fromkeys(voices) for k in keys
@@ -103,10 +114,12 @@ class Speaker(threading.Thread):
     """one line at a time, in order. say(voice, keys) plays cached phrases (a list of keys, joined with short gaps:
     the score call); say(voice, text=...) synthesizes live (ducking the game). Each line may carry a caption
     (SHOW_MSG through ra), a callback for when its audio has ended (the serve gate), and a priority: chatter
-    (priority 0) is dropped when more than one line is already waiting; calls (1) always play."""
+    (priority 0) is dropped when more than one line is already waiting, and skipped when it has waited more than
+    STALE s; the umpire's calls (1) always play; the score call (2) goes before anything waiting."""
+    STALE = 2.5
     def __init__(self, cache_dir, ra=None, log=None):
         super().__init__(daemon=True); self.dir = cache_dir; self.ra = ra; self.log = log or (lambda *a: None)
-        self.q = queue.Queue(); self.busy_until = 0.0; self.spoken = 0; self.dropped = 0; self.missing = set()
+        self.q = queue.PriorityQueue(); self.seq = 0; self.busy_until = 0.0; self.spoken = 0; self.dropped = 0; self.missing = set()
 
     def pcm_of(self, voice, keys):
         parts = []
@@ -117,7 +130,7 @@ class Speaker(threading.Thread):
                 if p:
                     try: os.makedirs(os.path.join(self.dir, voice), exist_ok=True); write_wav(os.path.join(self.dir, voice, k + ".wav"), p)
                     except OSError: pass
-            if p: parts.append(p)
+            if p: parts.append(trim(p))
         return GAP.join(parts)
 
     def waiting(self): return self.q.qsize()
@@ -125,12 +138,14 @@ class Speaker(threading.Thread):
     def say(self, voice, keys=None, text=None, show=None, on_done=None, priority=0):
         """queue a line; returns False when it was dropped (chatter behind a queue)"""
         if priority == 0 and self.q.qsize() >= 2: self.dropped += 1; return False
-        self.q.put((voice, list(keys or []), text, show, on_done)); return True
+        self.seq += 1; self.q.put((-priority, self.seq, (voice, list(keys or []), text, show, on_done, time.time()))); return True
 
     def run(self):
         while True:
-            voice, keys, text, show, on_done = self.q.get()
+            prio, _, (voice, keys, text, show, on_done, queued) = self.q.get()
             try:
+                if prio == 0 and time.time() - queued > self.STALE:
+                    self.dropped += 1; self.log(dict(stale=" ".join(PHRASES.get(k, k) for k in keys), voice=voice)); continue
                 live = text is not None and not keys
                 pcm = synth(text, voice) if live else self.pcm_of(voice, keys)
                 if show and self.ra: self.ra.cmd("SHOW_MSG " + show, reply=False)

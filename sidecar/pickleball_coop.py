@@ -123,7 +123,7 @@ def faithful(line, allowed_numbers, game_over):
     nums = {int(x) for x in re.findall(r"\b\d+\b", l)} | {words[w] for w in re.findall(r"\b[a-z-]+\b", l) if w in words}
     if nums - set(allowed_numbers): return False
     if not game_over and re.search(r"\b(won|win|wins|winning|lost|lose|game over|match|set)\b.{0,12}\b(game|match|set)\b|\bgame over\b", l): return False
-    return 2 <= len(l.split()) <= 24
+    return 1 <= len(l.split()) <= 24                       # "Thanks!" is an answer
 
 class Mailbox:
     """one read of the sixteen bytes, decoded"""
@@ -400,10 +400,10 @@ if __name__ == "__main__":
 
             # the serve gate: the server calls the score, then the serve is released
             if mb.call == 1 and not gate["open"]:
-                gate.update(open=True, since=time.time()); gate_deadline = time.time() + 3.2
+                gate.update(open=True, since=time.time()); gate_deadline = time.time() + 3.7   # the cartridge serves at 4.0
                 keys = score_words(mb); slot = mb.server_slot()
                 say(slot, keys, show="%s calls: %s" % ("You" if slot == 0 and not WATCH else "Partner" if slot == 1 and not WATCH else voice[slot].capitalize(),
-                                                        ", ".join(V.PHRASES[k] for k in keys)), on_done=release, priority=1)
+                                                        ", ".join(V.PHRASES[k] for k in keys)), on_done=release, priority=2)
                 log(dict(call_score=keys, slot=slot, state=ST[mb.state]))
             elif gate["open"] and (mb.call != 1 or time.time() > gate_deadline):
                 if mb.call == 1: release(); log(dict(gate="deadline"))
