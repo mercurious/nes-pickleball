@@ -1,4 +1,6 @@
 /* Drawing the match: the ball and its shadow, the players nearest first with their paddles, the server's badge.
+   Each player, their paddle and their badge are drawn in the player's own sprite palette (shirt[s]); the ball in
+   palette 2, whose shirt colour is its yellow.
    The paddle is its own sprite. In the swing's contact window it is drawn where the ball is, held inside the box
    in_reach allows (src/player.c: up to 18 px aside, so the face's centre up to 15 px plus its half-width), so a
    hit is seen to meet the paddle; before the window it is drawn back, after it across the body. */
@@ -15,7 +17,7 @@ static void draw_paddle(unsigned char s, unsigned char x, unsigned char y)
 {
     signed char side, dx, dy;
     int bdx, bdy;
-    unsigned char t = sw_t[s], tile = SPR_PADDLE_V, attr = 3;
+    unsigned char t = sw_t[s], tile = SPR_PADDLE_V, attr = shirt[s];
     side = (IS_NEAR(s) ^ (t ? sw_side[s] : 0)) ? 1 : -1;       /* the forehand: our right for the near player */
     if (!t) { dx = 9; dy = -16; }                              /* held at the side */
     else if (t < CW_START) { dx = 11; dy = IS_NEAR(s) ? -10 : -22; }   /* drawn back */
@@ -61,13 +63,13 @@ void draw_match(void)
            instead of one always vanishing */
         s = (doubles && (frame_count & 1)) ? order[3 - i] : order[i];
         if (!pactive[s]) continue;
-        attr = TEAM(s);
+        attr = shirt[s];
         if (sw_t[s] && sw_side[s]) attr |= ATTR_HFLIP;
         x = px[s] >> 8; y = py[s] >> 8;
         draw_paddle(s, x, y);
         draw_frame16(x - 8, y - 31, frame_of(s), attr);
         if (doubles && s == server_slot && (state == ST_CALL || state == ST_SERVE_DROP))
-            draw_spr(x - 4, y - 44, server_num == 1 ? SPR_BADGE1 : SPR_BADGE2, 3);
+            draw_spr(x - 4, y - 44, server_num == 1 ? SPR_BADGE1 : SPR_BADGE2, shirt[s]);
     }
     draw_end();
 }

@@ -35,10 +35,13 @@ On the title screen, move the asterisk with SELECT (or Up and Down) and change a
 - **2 PLAYERS DOUBLES**: you and a friend as a team against a computer team.
 - **2 PLAYERS SINGLES**: you against a friend. Player 2 plays the far court.
 - **EXHIBITION**: two computer teams play; watch and learn.
-- **LEVEL 1 to 5**: the computer's skill, from BEGINNER to CHAMPION. The computer's shirt shows its level.
+- **LEVEL 1 to 5**: the computer's skill, from BEGINNER to CHAMPION.
 - **GAME TO 11 / 15 / 21**: the points needed to win (always by 2).
 - **ONE GAME / BEST OF 3**: a single game or a match.
 - **LETS: REPLAY / PLAY**: a serve that touches the net and lands in is replayed (the traditional rule) or played.
+
+Every player wears a shirt of their own, drawn at random when the match starts, so you can tell them apart at a
+glance: the paddle and the server's badge match the shirt. One player in doubles wears the ball's yellow.
 
 Press START to begin. Leave the title screen alone for half a minute and a demonstration match begins.
 

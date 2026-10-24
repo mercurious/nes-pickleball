@@ -10,8 +10,8 @@ static unsigned char call_pending;
 static unsigned char bub_t, bub_len;
 static unsigned int bub_adr;
 
-static const char *NAME_A[MODE_COUNT] = { "YOU", "YOU", "YOU", "P1 ", "RED" };
-static const char *NAME_B[MODE_COUNT] = { "COM", "COM", "COM", "P2 ", "BLU" };
+static const char *NAME_A[MODE_COUNT] = { "YOU ", "YOU ", "YOU ", "P1  ", "NEAR" };
+static const char *NAME_B[MODE_COUNT] = { "COM ", "COM ", "COM ", "P2  ", "FAR " };
 static const char *PHRASES[] = { "", "MINE!", "YOURS!", "SWITCH!", "GOT IT", "BOUNCE IT", "NICE!", "SORRY", "OUT!",
                                  "GO!", "BACK!", "UP!", "MIDDLE!", "STAY!", "NO!", "GOOD", "HELP!" };
 #define PHRASE_COUNT 17
@@ -21,8 +21,8 @@ static void row(unsigned int adr, unsigned char team, const char *name)
     static char line[9];
     unsigned char sc = score[team];
     line[0] = (team == serving_team) ? '*' : ' ';
-    line[1] = name[0]; line[2] = name[1]; line[3] = name[2];
-    line[4] = ' '; line[5] = ' ';
+    line[1] = name[0]; line[2] = name[1]; line[3] = name[2]; line[4] = name[3];
+    line[5] = ' ';
     line[6] = (sc >= 10) ? '0' + sc / 10 : ' ';
     line[7] = '0' + sc % 10;
     line[8] = 0;

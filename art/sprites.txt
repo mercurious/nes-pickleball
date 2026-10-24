@@ -1,5 +1,6 @@
-# NES Pickleball sprites: '.' transparent, 1 skin, 2 shirt, 3 dark (hair, shorts, shoes). The paddle is its own
-# sprite (PADDLE_*, sprite palette 3: 1 black, 2 white, 3 red), placed by src/render.c where the ball is met.
+# NES Pickleball sprites: '.' transparent, 1 skin, 2 shirt, 3 dark (hair, shorts, shoes). Every sprite palette is a
+# player's {skin, shirt, dark}: the paddle (PADDLE_*) and the server's badge are drawn in their player's palette, the
+# ball in palette 2, whose shirt is its yellow (src/render.c places the paddle where the ball is met).
 # N_ = near player seen from behind, F_ = far player facing us. 16x24 frames, feet on the last row.
 @N_STAND 16 24
 ......3333......
@@ -352,52 +353,52 @@
 ....333..333....
 ....333..333....
 @BALL 8 6
-..1111..
-.111111.
-11211211
-11111111
-.112111.
-..1111..
+..2222..
+.222222.
+22322322
+22222222
+.223222.
+..2222..
 @SHADOW 8 4
 ........
 .333333.
 33333333
 .333333.
 @BADGE1 8 8
-11111111
-11121111
-11221111
-11121111
-11121111
-11121111
-11222111
-11111111
+33333333
+33313333
+33113333
+33313333
+33313333
+33313333
+33111333
+33333333
 @BADGE2 8 8
-11111111
-11222111
-12111211
-11111211
-11122111
-11211111
-12222211
-11111111
+33333333
+33111333
+31333133
+33333133
+33311333
+33133333
+31111133
+33333333
 @PADDLE_V 8 11
-..111...
-.13331..
-.13331..
-.13321..
-.13331..
-.13331..
-..111...
-...1....
-...1....
-...1....
-...1....
+..333...
+.32223..
+.32223..
+.32213..
+.32223..
+.32223..
+..333...
+...3....
+...3....
+...3....
+...3....
 @PADDLE_H 8 7
-....111.
-...13331
-..133331
-11133321
-..133331
-...13331
-....111.
+....333.
+...32223
+..322223
+33322213
+..322223
+...32223
+....333.

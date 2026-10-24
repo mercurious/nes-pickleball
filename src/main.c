@@ -9,13 +9,15 @@ extern const unsigned char court_nt[];
 
 static const unsigned char pal_court[32] = {
     0x09, 0x1A, 0x30, 0x2A,  0x09, 0x0F, 0x30, 0x28,  0x09, 0x30, 0x00, 0x0F,  0x09, 0x17, 0x37, 0x30,
-    0x09, 0x37, 0x30, 0x0F,  0x09, 0x37, 0x2B, 0x0F,  0x09, 0x28, 0x18, 0x0F,  0x09, 0x0F, 0x30, 0x16
-};
+    0x09, 0x37, 0x30, 0x0F,  0x09, 0x37, 0x16, 0x0F,  0x09, 0x37, 0x28, 0x0F,  0x09, 0x37, 0x12, 0x0F
+};   /* the four sprite palettes are {skin, shirt, dark}; the shirts are drawn by assign_shirts */
 static const unsigned char pal_title[32] = {
     0x0F, 0x0F, 0x30, 0x28,  0x0F, 0x0F, 0x30, 0x28,  0x0F, 0x0F, 0x30, 0x28,  0x0F, 0x0F, 0x30, 0x28,
     0x0F, 0x37, 0x30, 0x0F,  0x0F, 0x37, 0x2B, 0x0F,  0x0F, 0x28, 0x18, 0x0F,  0x0F, 0x0F, 0x30, 0x28
 };
-static const unsigned char LEVEL_SHIRT[6] = { 0x2B, 0x2B, 0x25, 0x21, 0x13, 0x02 };
+/* the shirts a match draws from: white, red, blue, orange, magenta, teal; none near the court's greens, the skin
+   or the ball's yellow */
+static const unsigned char SHIRTS[6] = { 0x30, 0x16, 0x12, 0x27, 0x24, 0x2C };
 static const char *MODE_NAMES[MODE_COUNT] = { "1 PLAYER  SINGLES", "1 PLAYER  DOUBLES", "2 PLAYERS DOUBLES",
                                               "2 PLAYERS SINGLES", "EXHIBITION       " };
 static const char *GAME_TO_NAMES[3] = { "GAME TO 11  ", "GAME TO 15  ", "GAME TO 21  " };
@@ -116,11 +118,27 @@ static void title_screen(void)
     set_rand(idle ^ (frame_count << 8) ^ 0x5A17);
 }
 
+/* Every player wears a shirt of their own, drawn at random for the match, so they can be told apart: three of the
+   SHIRTS go to sprite palettes 0, 1 and 3, and palette 2's shirt is the ball's yellow, which one player wears in
+   doubles (the ball is drawn in that palette). Which player gets which palette is shuffled too. */
+static void assign_shirts(void)
+{
+    unsigned char pool[6], perm[4], i, j, k, n;
+    for (i = 0; i < 6; ++i) pool[i] = SHIRTS[i];
+    for (i = 0; i < 3; ++i) { j = i + rand8() % (6 - i); k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
+    pal_buf[16 + 2] = pool[0]; pal_buf[20 + 2] = pool[1]; pal_buf[28 + 2] = pool[2]; pal_buf[24 + 2] = 0x28;
+    for (i = 0; i < 4; ++i) perm[i] = i;
+    n = doubles ? 4 : 2;                                   /* singles: palettes 0 and 1, the ball's stays its own */
+    for (i = 0; i + 1 < n; ++i) { j = i + rand8() % (n - i); k = perm[i]; perm[i] = perm[j]; perm[j] = k; }
+    if (doubles) for (i = 0; i < 4; ++i) shirt[i] = perm[i];
+    else { shirt[0] = perm[0]; shirt[2] = perm[1]; shirt[1] = shirt[3] = 0; }
+}
+
 static void court_screen(void)
 {
     ppu_off();
     set_pal(pal_court);
-    pal_buf[22] = LEVEL_SHIRT[level];
+    assign_shirts();
     vram_adr(0x2000);
     vram_write(court_nt, 1024);
     if (demo) put_text(NTADR(13, 26), "DEMO");

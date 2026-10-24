@@ -10,7 +10,8 @@ rule, and the kitchen, where the point is usually won softly rather than with a 
 - Title screen: **PICKLEBALL** in a 1985 block font, a court in the background, the menu below, the copyright
   line to be decided (see PLAN.md). No Nintendo marks, no Mario: our own umpire in the chair.
 - Black-box era look: a 256 x 240 single screen, no scrolling, two court tones with white lines, a plain
-  surround, players as 16 x 24 sprites in team colours, the opponents' shirts coloured by level as in *Tennis*.
+  surround, players as 16 x 24 sprites, each in a shirt of their own drawn at random for the match (a casual game, not a
+  team strip), so they can be told apart.
 - Sound: a short title jingle, point and side-out stings, a game-over fanfare, paddle and bounce effects, noise
   applause, and (if the ROM has room) the digitized score call. Every word and jingle must be plausible for a 1985
   cartridge: nothing sampled from a real voice except what the DPCM channel can carry.
@@ -226,7 +227,7 @@ RetroArch (fceumm, pickleball.nes)  <-UDP 55355->  sidecar/pickleball_coop.py  -
 | resource | budget | plan |
 |---|---|---|
 | PRG 32 KB | code 12-16 KB, tables 3-5 KB, DPCM 9-11 KB, vectors | `tools/check_rom.py` prints free bytes; DPCM words are cut first |
-| CHR 8 KB | BG: court tiles (≤ 150) + font (64) + HUD/umpire (30); SPR: 4 player poses x 2 sides x 2 teams as palettes, ball, shadow, badges | palettes, not tiles, distinguish teams |
+| CHR 8 KB | BG: court tiles (≤ 150) + font (64) + HUD/umpire (30); SPR: 4 player poses x 2 sides, one palette per player, ball, shadow, badges | palettes, not tiles, distinguish players |
 | RAM 2 KB | $00-$FF zero page (hot vars), $100 stack, $200 OAM, $300-$3FF VRAM buffer, $400-$7EF game state, $7F0-$7FF mailbox | |
 | per scanline | 8 sprites | 6 worst case at the kitchen line |
 | CPU per frame | ~29,000 cycles | 4 AI players + physics + collision in C: measured with Mesen's profiler in Phase 3; move hot loops to asm if over 70 % |

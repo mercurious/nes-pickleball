@@ -46,6 +46,7 @@ extern unsigned int px[4], py[4];
 #pragma zpsym("px")
 #pragma zpsym("py")
 extern unsigned char pactive[4], phuman[4], pstate[4], sw_t[4], sw_kind[4], sw_side[4], anim_t[4], mom_t[4];
+extern unsigned char shirt[4];               /* the sprite palette (0-3) each slot is drawn in; see assign_shirts */
 extern int pspeed[4];
 extern signed char in_dx[4], in_dy[4];
 extern unsigned char in_swing[4];

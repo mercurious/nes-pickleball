@@ -12,6 +12,7 @@ unsigned char state, state_t;
 #pragma bss-name(pop)
 
 unsigned char pactive[4], phuman[4], pstate[4], sw_t[4], sw_kind[4], sw_side[4], anim_t[4], mom_t[4];
+unsigned char shirt[4];
 int pspeed[4];
 signed char in_dx[4], in_dy[4];
 unsigned char in_swing[4];
