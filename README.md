@@ -6,23 +6,6 @@ the 1985 launch window, in the mould of *Tennis* (Famicom 1984, NES 1985). The s
 Pacific Northwest had heard of it. The cartridge plays the rules of that era: side-out scoring to 11, the
 two-bounce rule, the 7-foot non-volley zone, underhand serves, one serve, let serves replayed.
 
-**Status (2026-10-24): v0.0.1 re-released from main; v0.0.2, the add-on, built and waiting for a handheld.** The
-first v0.0.1 (2026-10-11, an NROM ROM) had been downloaded by nobody, so the rebuilt cartridge keeps its number.
-`make` produces `build/pickleball.nes`: an MMC3 cartridge (256 KB PRG, 32 KB CHR, 8 KB PRG-RAM) with the doubles
-fix, a new sound (Pently, real pocks from CC0 recordings, a Kokoro umpire), a visible paddle, and every player in a
-shirt of their own, drawn at random each match. It plays in any NES emulator and is tested headless in MesenCE's
-test runner. The maintainer approved the new sound as shipped (2026-10-24). The plan that built it and its progress
-are in [docs/DOSSIER_v0.1.0.md](docs/DOSSIER_v0.1.0.md) (the dossier keeps its name), the sound in
-[docs/SOUND.md](docs/SOUND.md). The add-on's sidecar (`sidecar/pickleball_coop.py`) runs the whole v0.0.2 protocol
-against the unchanged cartridge in a desktop RetroArch with stand-ins for the model servers
-(`test/sidecar_test.sh`, 33 checks); `tools/addon.sh` packs what autogamer bundles, and autogamer's branch
-`pickleball-coop` carries the two game entries. On a 12 GB Flip 2 with the real servers it called an exhibition
-(serves released 0.6-2.3 s into the cartridge's 4 s gate) and played doubles with Gemma 4 E4B making the partner's
-calls (6-8 s each) and Qwen3-ASR hearing the orders; the recordings are on the handheld for the maintainer's ears.
-The maintainer approved the voices by ear (2026-10-24) and v0.0.2 is released: the add-on tarball that autogamer
-bundles. A game with a person at the microphone and autogamer's own release wait:
-[docs/Findings_20261024.md](docs/Findings_20261024.md).
-
 | document | what it is |
 |---|---|
 | [docs/PLAN.md](docs/PLAN.md) | the one-shot build plan: phases, gates, hosts, risks, decisions |
@@ -44,8 +27,8 @@ bundles. A game with a person at the microphone and autogamer's own release wait
 
 | version | what | runs on |
 |---|---|---|
-| **v0.0.1 the cartridge** | the ROM: MMC3 (256 KB PRG + 32 KB CHR, 8 KB PRG-RAM), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch, every player in a shirt of their own. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
-| **v0.0.2 the teammate add-on** | the sidecar (`sidecar/pickleball_coop.py`): autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "sorry"), makes its own calls between points (Gemma 4 through llamatalk's `llama-server`, with a record of what each call did in each situation), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch", "be patient", "your call". An exhibition mode gives all four players and the umpire a voice. No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as two [autogamer](https://github.com/mercurious/autogamer) entries (`pickleball-coop`, `pickleball-watch`) on a bundled ROM, the first that need no dump from the player |
+| **[v0.0.1 the cartridge](https://github.com/mercurious/nes-pickleball/releases/tag/v0.0.1)** | the ROM: MMC3 (256 KB PRG + 32 KB CHR, 8 KB PRG-RAM), C and 6502 assembly with cc65. Singles and doubles against the computer, two players as a doubles team, five levels, an exhibition to watch, every player in a shirt of their own. The server calls the score before every serve; the umpire calls faults. A documented RAM mailbox is built in and tested, unused by the cartridge itself | any NES emulator, a flash cart, the Flip 2 as a plain NES game |
+| **[v0.0.2 the teammate add-on](https://github.com/mercurious/nes-pickleball/releases/tag/v0.0.2)** | the sidecar (`sidecar/pickleball_coop.py`): autogamer's Contra co-op moved onto a court. Your doubles partner has a voice (Pocket TTS), calls the score, chatters ("mine", "bounce it", "sorry"), makes its own calls between points (Gemma 4 through llamatalk's `llama-server`, with a record of what each call did in each situation), and takes yours: hold R1 and say "I've got the middle", "stay back", "switch", "be patient", "your call". An exhibition mode gives all four players and the umpire a voice. No ROM change: it reads and writes the mailbox through RetroArch | ROCKNIX handhelds with [llamatalk](https://github.com/mercurious/llamatalk); packaged as two [autogamer](https://github.com/mercurious/autogamer) entries (`pickleball-coop`, `pickleball-watch`) on a bundled ROM, the first that need no dump from the player |
 
 The add-on is built only after the cartridge is validated; the cartridge is built so that the add-on needs
 nothing from it but the frozen mailbox and RAM map.
